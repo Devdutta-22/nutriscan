@@ -5,7 +5,8 @@ import {
   Calculator, PhoneCall, Globe, Clock, Languages, 
   Layers, Eye, BookOpen, FileText, Barcode as BarcodeIcon, 
   Image as ImageIcon, RefreshCw, Copy, CheckCircle2,
-  ExternalLink, Sparkles, ChevronDown, ChevronUp, Award
+  ExternalLink, Sparkles, ChevronDown, ChevronUp, Award,
+  Megaphone, ShieldCheck, ShieldAlert
 } from 'lucide-react';
 import { AuditReport, ChecklistItem } from '../../types/compliance';
 import { calculateProductGrade } from '../../utils/grading';
@@ -128,7 +129,7 @@ const getGradeVisuals = (grade: string) => {
         needleColor: '#FF2A85', // pink indicator tick
         badgeBg: 'bg-[#D5FF3F] text-black border-2 border-black',
         textColor: 'text-[#D5FF3F]',
-        label: 'A GRADE (HIGH COMPLIANCE)',
+        label: 'EXEMPLARY COMPLIANCE',
       };
     case 'B':
       return {
@@ -136,7 +137,7 @@ const getGradeVisuals = (grade: string) => {
         needleColor: '#00E5FF', // cyan tick
         badgeBg: 'bg-[#FACC15] text-black border-2 border-black',
         textColor: 'text-[#FACC15]',
-        label: 'B GRADE (SATISFACTORY)',
+        label: 'SATISFACTORY COMPLIANCE',
       };
     case 'C':
       return {
@@ -144,7 +145,7 @@ const getGradeVisuals = (grade: string) => {
         needleColor: '#D5FF3F', // lime tick
         badgeBg: 'bg-[#FB923C] text-black border-2 border-black',
         textColor: 'text-[#FB923C]',
-        label: 'C GRADE (ADVISORIES PRESENT)',
+        label: 'ADVISORIES PRESENT',
       };
     case 'F':
     default:
@@ -153,7 +154,7 @@ const getGradeVisuals = (grade: string) => {
         needleColor: '#D5FF3F', // lime tick
         badgeBg: 'bg-[#FF2A85] text-white border-2 border-black',
         textColor: 'text-[#FF2A85]',
-        label: 'F GRADE (CRITICAL VIOLATION)',
+        label: 'CRITICAL CONTRAVENTION',
       };
   }
 };
@@ -248,13 +249,13 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
     <div className="fixed inset-0 z-50 bg-[#F7F6F0] overflow-y-auto flex flex-col font-sans antialiased text-zinc-900">
       
       {/* Dynamic Responsive Container: Mobile full-width / Desktop max-w-6xl */}
-      <div className="w-full max-w-6xl mx-auto min-h-screen flex flex-col px-4 sm:px-6 lg:px-8 py-5 sm:py-7 space-y-6">
+      <div className="w-full max-w-6xl mx-auto min-h-screen flex flex-col px-4 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-6">
         
         {/* Top App Header */}
         <header className="flex items-center justify-between">
           <button
             onClick={onClose}
-            className="w-10 h-10 rounded-xl bg-[#12161A] hover:bg-black text-white flex items-center justify-center transition-all active:scale-95 shadow-sm"
+            className="w-10 h-10 rounded-xl bg-[#12161A] hover:bg-black text-white flex items-center justify-center transition-all active:scale-95 shadow-sm cursor-pointer"
             aria-label="Back"
           >
             <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
@@ -267,7 +268,7 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
           <div className="relative">
             <button
               onClick={handleShare}
-              className="w-10 h-10 rounded-xl bg-[#12161A] hover:bg-black text-white flex items-center justify-center transition-all active:scale-95 shadow-sm"
+              className="w-10 h-10 rounded-xl bg-[#12161A] hover:bg-black text-white flex items-center justify-center transition-all active:scale-95 shadow-sm cursor-pointer"
               aria-label="Share"
             >
               {copiedShare ? (
@@ -288,7 +289,7 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
         <div className="flex items-center gap-1.5 p-1 bg-zinc-200/80 rounded-xl text-xs font-bold max-w-xl mx-auto w-full">
           <button
             onClick={() => setActiveTab('details')}
-            className={`flex-1 py-2 px-3 rounded-lg transition-all text-center ${
+            className={`flex-1 py-2 px-3 rounded-lg transition-all text-center cursor-pointer ${
               activeTab === 'details'
                 ? 'bg-black text-white shadow-xs'
                 : 'text-zinc-600 hover:text-black'
@@ -298,7 +299,7 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('canvas')}
-            className={`flex-1 py-2 px-3 rounded-lg transition-all text-center ${
+            className={`flex-1 py-2 px-3 rounded-lg transition-all text-center cursor-pointer ${
               activeTab === 'canvas'
                 ? 'bg-black text-white shadow-xs'
                 : 'text-zinc-600 hover:text-black'
@@ -308,7 +309,7 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('barcodes')}
-            className={`flex-1 py-2 px-3 rounded-lg transition-all text-center ${
+            className={`flex-1 py-2 px-3 rounded-lg transition-all text-center cursor-pointer ${
               activeTab === 'barcodes'
                 ? 'bg-black text-white shadow-xs'
                 : 'text-zinc-600 hover:text-black'
@@ -318,7 +319,7 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('gazette')}
-            className={`flex-1 py-2 px-3 rounded-lg transition-all text-center ${
+            className={`flex-1 py-2 px-3 rounded-lg transition-all text-center cursor-pointer ${
               activeTab === 'gazette'
                 ? 'bg-black text-white shadow-xs'
                 : 'text-zinc-600 hover:text-black'
@@ -328,11 +329,11 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
           </button>
         </div>
 
-        {/* MAIN TAB: AUDIT REPORT (DYNAMIC RESPONSIVE FOR MOBILE + PC) */}
+        {/* MAIN TAB: AUDIT REPORT */}
         {activeTab === 'details' && (
           <div className="space-y-6">
             
-            {/* Top Product Title Block + CERTIFICATE BUTTON (Replaces Grade Button) */}
+            {/* Top Product Title Block + CERTIFICATE PDF BUTTON (Top Right) */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-zinc-200/70">
               <div className="space-y-1">
                 <h2 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-[#12161A] uppercase leading-tight">
@@ -347,7 +348,7 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
                 </div>
               </div>
 
-              {/* CERTIFICATE PDF BUTTON ON TOP (replaces static grade pill) */}
+              {/* CERTIFICATE PDF BUTTON ON TOP */}
               <button
                 onClick={onOpenNotice}
                 className="bg-[#D5FF3F] hover:bg-[#c2ef2b] text-black border-2 border-black font-black px-4 py-2.5 rounded-xl text-xs tracking-wider shadow-[3px_3px_0px_#000] shrink-0 transition-all active:scale-95 flex items-center gap-2 cursor-pointer self-start sm:self-auto"
@@ -360,13 +361,12 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
               </button>
             </div>
 
-            {/* DYNAMIC TWO-COLUMN GRID ON DESKTOP (lg:), SINGLE-COLUMN ON MOBILE */}
+            {/* UPPER DYNAMIC TWO-COLUMN GRID: GAUGE (LEFT) + 11 TEST CASES (RIGHT) */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
               
-              {/* LEFT COLUMN: GAUGE + NUTRITION ANALYSIS + ACTIONS (5 cols on desktop) */}
-              <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-6">
+              {/* LEFT COLUMN: SEMICIRCULAR SPEEDOMETER GAUGE (5 cols on desktop) */}
+              <div className="lg:col-span-5 space-y-5 lg:sticky lg:top-6">
                 
-                {/* 1. Semicircular Speedometer Gauge Card */}
                 <section className="space-y-3">
                   <div className="flex items-center gap-2">
                     <span className="w-1.5 h-5 bg-[#8B5CF6] rounded-full inline-block" />
@@ -375,11 +375,10 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
                     </h3>
                   </div>
 
+                  {/* Clean dark container WITHOUT the translucent circle */}
                   <div className="bg-[#131722] rounded-3xl p-6 text-white text-center relative overflow-hidden shadow-lg border border-black">
-                    {/* Soft decorative background bubble */}
-                    <div className="w-44 h-44 rounded-full bg-[#2C2B4E]/60 absolute -top-10 -right-10 pointer-events-none blur-[1px]" />
-
-                    {/* SVG Gauge */}
+                    
+                    {/* SVG Speedometer Gauge */}
                     <svg className="w-full max-w-[280px] mx-auto overflow-visible" viewBox="0 0 240 135">
                       {/* Top 50 label */}
                       <text x="120" y="16" fill="#9CA3AF" fontSize="10" fontWeight="bold" textAnchor="middle" letterSpacing="1">
@@ -448,7 +447,7 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
                       </text>
                     </svg>
 
-                    {/* Bottom Big Percentage Text in Grade Color */}
+                    {/* Bottom Big Percentage in Grade Color */}
                     <p className="text-3xl sm:text-4xl font-black tracking-tight mt-1" style={{ color: gradeVisuals.meterColor }}>
                       {score} %
                     </p>
@@ -483,141 +482,22 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
                   </div>
                 </section>
 
-                {/* 2. Nutrition Analysis Bar Chart */}
-                <section className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className="w-1.5 h-5 bg-[#00E5FF] rounded-full inline-block" />
-                    <h3 className="text-base sm:text-lg font-black text-[#12161A] tracking-tight">
-                      Nutrition Analysis
-                    </h3>
+                {/* Quick Summary Pill Card */}
+                <div className="p-4 rounded-2xl bg-white border border-zinc-300 shadow-2xs space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-zinc-500 uppercase tracking-wider">Legal Posture</span>
+                    <span className={`px-2 py-0.5 rounded font-black text-[10px] uppercase font-mono ${
+                      isLawful ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                    }`}>
+                      {isLawful ? 'LAWFUL FOR RETAIL' : 'STATUTORY CONTRAVENTION'}
+                    </span>
                   </div>
-
-                  <div className="bg-[#131722] rounded-3xl p-3 sm:p-4 border border-black shadow-lg">
-                    <div className="bg-white rounded-2xl p-4 sm:p-5">
-                      
-                      {/* Chart Container with Y Axis */}
-                      <div className="relative h-56 sm:h-60 flex">
-                        {/* Y Axis Numbers */}
-                        <div className="flex flex-col justify-between text-[10px] font-bold text-zinc-400 pr-2 select-none py-1 text-right w-7">
-                          <span>400</span>
-                          <span>300</span>
-                          <span>200</span>
-                          <span>100</span>
-                          <span>0</span>
-                        </div>
-
-                        {/* Grid lines & Bars container */}
-                        <div className="relative flex-1 border-l border-b border-zinc-200">
-                          {/* Horizontal Grid lines */}
-                          <div className="absolute inset-0 flex flex-col justify-between pointer-events-none py-1">
-                            <div className="w-full border-b border-zinc-100" />
-                            <div className="w-full border-b border-zinc-100" />
-                            <div className="w-full border-b border-zinc-100" />
-                            <div className="w-full border-b border-zinc-100" />
-                            <div className="w-full border-b border-transparent" />
-                          </div>
-
-                          {/* 5 Vertical Bars */}
-                          <div className="relative h-full flex items-end justify-between px-1.5 sm:px-3 pb-0">
-                            {/* Calories (Black bar) */}
-                            <div className="flex flex-col items-center w-8 sm:w-11">
-                              <div 
-                                className="w-full bg-[#12161A] border-2 border-black rounded-t flex items-center justify-center overflow-hidden transition-all duration-700"
-                                style={{ height: `${Math.min(205, (nutrition.calories / 500) * 205)}px` }}
-                              >
-                                <span className="text-white text-[10px] font-black -rotate-90 whitespace-nowrap tracking-wider select-none">
-                                  {nutrition.calories}kcal
-                                </span>
-                              </div>
-                            </div>
-
-                            {/* Fat (Cyan bar) */}
-                            <div className="flex flex-col items-center w-8 sm:w-11">
-                              <span className="text-[10px] font-bold text-zinc-700 pb-1">
-                                {nutrition.fat}g
-                              </span>
-                              <div 
-                                className="w-full bg-[#00E5FF] border-2 border-black rounded-t transition-all duration-700"
-                                style={{ height: `${Math.max(12, Math.min(180, (nutrition.fat / 100) * 170))}px` }}
-                              />
-                            </div>
-
-                            {/* Carbs (Purple bar) */}
-                            <div className="flex flex-col items-center w-8 sm:w-11">
-                              <div 
-                                className="w-full bg-[#8B5CF6] border-2 border-black rounded-t flex items-center justify-center transition-all duration-700"
-                                style={{ height: `${Math.max(22, Math.min(180, (nutrition.carbs / 100) * 170))}px` }}
-                              >
-                                <span className="text-white text-[10px] font-black select-none">
-                                  {nutrition.carbs}g
-                                </span>
-                              </div>
-                            </div>
-
-                            {/* Protein (Lime bar) */}
-                            <div className="flex flex-col items-center w-8 sm:w-11">
-                              <span className="text-[10px] font-bold text-zinc-700 pb-1">
-                                {nutrition.protein}g
-                              </span>
-                              <div 
-                                className="w-full bg-[#D5FF3F] border-2 border-black rounded-t transition-all duration-700"
-                                style={{ height: `${Math.max(10, Math.min(180, (nutrition.protein / 100) * 170))}px` }}
-                              />
-                            </div>
-
-                            {/* Sugar (Pink bar) */}
-                            <div className="flex flex-col items-center w-8 sm:w-11">
-                              <span className="text-[10px] font-bold text-zinc-700 pb-1">
-                                {nutrition.sugar}g
-                              </span>
-                              <div 
-                                className="w-full bg-[#FF2A85] border-2 border-black rounded-t transition-all duration-700"
-                                style={{ height: `${Math.max(16, Math.min(180, (nutrition.sugar / 100) * 170))}px` }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* X Axis Labels */}
-                      <div className="flex justify-between pl-7 pr-1.5 sm:pr-3 pt-2 text-center text-xs font-bold text-zinc-900 select-none">
-                        <span className="w-8 sm:w-11">Calories</span>
-                        <span className="w-8 sm:w-11">Fat</span>
-                        <span className="w-8 sm:w-11">Carbs</span>
-                        <span className="w-8 sm:w-11">Protein</span>
-                        <span className="w-8 sm:w-11">Sugar</span>
-                      </div>
-
-                    </div>
-                  </div>
-                </section>
-
-                {/* 3. Action Buttons */}
-                <div className="space-y-3 pt-2">
-                  <button
-                    onClick={onOpenComplaint ? onOpenComplaint : onOpenNotice}
-                    className="w-full bg-[#131722] hover:bg-black text-white py-4 px-6 rounded-2xl font-black text-sm tracking-widest uppercase flex items-center justify-center gap-2.5 shadow-xl transition-all active:scale-[0.98] border border-zinc-800"
-                  >
-                    <span>REPORT VIOLATION</span>
-                    <AlertCircle className="w-5 h-5 text-white" />
-                  </button>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={onOpenNotice}
-                      className="flex-1 py-2.5 px-3 rounded-xl bg-white hover:bg-zinc-100 text-zinc-800 border border-zinc-300 font-bold text-xs text-center transition-colors shadow-2xs"
-                    >
-                      {isLawful ? 'Compliance Certificate' : 'Rule 32 Notice'}
-                    </button>
-                    {onRescan && (
-                      <button
-                        onClick={onRescan}
-                        className="py-2.5 px-4 rounded-xl bg-white hover:bg-zinc-100 text-zinc-800 border border-zinc-300 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
-                      >
-                        <RefreshCw className="w-3.5 h-3.5 text-zinc-500" />
-                        <span>Rescan</span>
-                      </button>
-                    )}
+                  <p className="text-xs text-zinc-600 font-medium leading-relaxed">
+                    {gradeInfo.description}
+                  </p>
+                  <div className="pt-2 border-t border-zinc-100 flex items-center justify-between text-[11px] text-zinc-500 font-mono">
+                    <span>Corpus: LMPC 2011</span>
+                    <span className="font-bold text-rose-600">{gradeInfo.penaltyEstimate}</span>
                   </div>
                 </div>
 
@@ -641,7 +521,7 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
                   <div className="flex items-center gap-1 bg-zinc-200/80 p-1 rounded-xl text-xs font-bold self-start sm:self-auto">
                     <button
                       onClick={() => setFilter('ALL')}
-                      className={`px-2.5 py-1 rounded-lg transition-all ${
+                      className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
                         filter === 'ALL' ? 'bg-black text-white shadow-2xs' : 'text-zinc-600 hover:text-black'
                       }`}
                     >
@@ -650,7 +530,7 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
                     {failedCount > 0 && (
                       <button
                         onClick={() => setFilter('VIOLATION')}
-                        className={`px-2.5 py-1 rounded-lg transition-all ${
+                        className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
                           filter === 'VIOLATION' ? 'bg-[#FF2A85] text-white shadow-2xs' : 'text-[#FF2A85] hover:bg-rose-100/50'
                         }`}
                       >
@@ -660,7 +540,7 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
                     {warningsCount > 0 && (
                       <button
                         onClick={() => setFilter('WARNING')}
-                        className={`px-2.5 py-1 rounded-lg transition-all ${
+                        className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
                           filter === 'WARNING' ? 'bg-amber-500 text-white shadow-2xs' : 'text-amber-700 hover:bg-amber-100/50'
                         }`}
                       >
@@ -669,7 +549,7 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
                     )}
                     <button
                       onClick={() => setFilter('COMPLIANT')}
-                      className={`px-2.5 py-1 rounded-lg transition-all ${
+                      className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
                         filter === 'COMPLIANT' ? 'bg-emerald-600 text-white shadow-2xs' : 'text-emerald-700 hover:bg-emerald-100/50'
                       }`}
                     >
@@ -778,7 +658,7 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
                               <button
                                 type="button"
                                 onClick={() => handleSpotlight(item.mandate_id)}
-                                className="flex-1 py-1.5 px-2.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold text-[11px] flex items-center justify-center gap-1.5 transition-colors"
+                                className="flex-1 py-1.5 px-2.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold text-[11px] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                               >
                                 <Eye className="w-3.5 h-3.5 text-[#D5FF3F]" />
                                 <span>Spotlight on Canvas</span>
@@ -787,7 +667,7 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
                               <button
                                 type="button"
                                 onClick={() => setActiveTab('gazette')}
-                                className="py-1.5 px-2.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold text-[11px] flex items-center justify-center gap-1.5 transition-colors"
+                                className="py-1.5 px-2.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold text-[11px] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                               >
                                 <BookOpen className="w-3.5 h-3.5 text-zinc-300" />
                                 <span>Full Gazette</span>
@@ -802,6 +682,144 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
 
               </div>
 
+            </div>
+
+            {/* LOWER FULL-WIDTH SECTION: NUTRITION ANALYSIS AT THE BOTTOM */}
+            <section className="space-y-3 pt-4 border-t border-zinc-200/80">
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-5 bg-[#00E5FF] rounded-full inline-block" />
+                <h3 className="text-base sm:text-lg font-black text-[#12161A] tracking-tight">
+                  Nutrition Analysis
+                </h3>
+              </div>
+
+              <div className="bg-[#131722] rounded-3xl p-4 sm:p-6 border border-black shadow-lg">
+                <div className="bg-white rounded-2xl p-4 sm:p-6">
+                  
+                  {/* Chart Container with Y Axis */}
+                  <div className="relative h-60 sm:h-64 flex">
+                    {/* Y Axis Numbers */}
+                    <div className="flex flex-col justify-between text-[11px] font-bold text-zinc-400 pr-3 select-none py-1 text-right w-8">
+                      <span>400</span>
+                      <span>300</span>
+                      <span>200</span>
+                      <span>100</span>
+                      <span>0</span>
+                    </div>
+
+                    {/* Grid lines & Bars container */}
+                    <div className="relative flex-1 border-l border-b border-zinc-200">
+                      {/* Horizontal Grid lines */}
+                      <div className="absolute inset-0 flex flex-col justify-between pointer-events-none py-1">
+                        <div className="w-full border-b border-zinc-100" />
+                        <div className="w-full border-b border-zinc-100" />
+                        <div className="w-full border-b border-zinc-100" />
+                        <div className="w-full border-b border-zinc-100" />
+                        <div className="w-full border-b border-transparent" />
+                      </div>
+
+                      {/* 5 Vertical Bars */}
+                      <div className="relative h-full flex items-end justify-around px-2 sm:px-6 pb-0">
+                        {/* Calories (Black bar) */}
+                        <div className="flex flex-col items-center w-10 sm:w-14">
+                          <div 
+                            className="w-full bg-[#12161A] border-2 border-black rounded-t flex items-center justify-center overflow-hidden transition-all duration-700 shadow-xs"
+                            style={{ height: `${Math.min(215, (nutrition.calories / 500) * 215)}px` }}
+                          >
+                            <span className="text-white text-[11px] font-black -rotate-90 whitespace-nowrap tracking-wider select-none">
+                              {nutrition.calories}kcal
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Fat (Cyan bar) */}
+                        <div className="flex flex-col items-center w-10 sm:w-14">
+                          <span className="text-[11px] font-bold text-zinc-800 pb-1 font-mono">
+                            {nutrition.fat}g
+                          </span>
+                          <div 
+                            className="w-full bg-[#00E5FF] border-2 border-black rounded-t transition-all duration-700 shadow-xs"
+                            style={{ height: `${Math.max(14, Math.min(190, (nutrition.fat / 100) * 180))}px` }}
+                          />
+                        </div>
+
+                        {/* Carbs (Purple bar) */}
+                        <div className="flex flex-col items-center w-10 sm:w-14">
+                          <div 
+                            className="w-full bg-[#8B5CF6] border-2 border-black rounded-t flex items-center justify-center transition-all duration-700 shadow-xs"
+                            style={{ height: `${Math.max(24, Math.min(190, (nutrition.carbs / 100) * 180))}px` }}
+                          >
+                            <span className="text-white text-[11px] font-black select-none font-mono">
+                              {nutrition.carbs}g
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Protein (Lime bar) */}
+                        <div className="flex flex-col items-center w-10 sm:w-14">
+                          <span className="text-[11px] font-bold text-zinc-800 pb-1 font-mono">
+                            {nutrition.protein}g
+                          </span>
+                          <div 
+                            className="w-full bg-[#D5FF3F] border-2 border-black rounded-t transition-all duration-700 shadow-xs"
+                            style={{ height: `${Math.max(12, Math.min(190, (nutrition.protein / 100) * 180))}px` }}
+                          />
+                        </div>
+
+                        {/* Sugar (Pink bar) */}
+                        <div className="flex flex-col items-center w-10 sm:w-14">
+                          <span className="text-[11px] font-bold text-zinc-800 pb-1 font-mono">
+                            {nutrition.sugar}g
+                          </span>
+                          <div 
+                            className="w-full bg-[#FF2A85] border-2 border-black rounded-t transition-all duration-700 shadow-xs"
+                            style={{ height: `${Math.max(16, Math.min(190, (nutrition.sugar / 100) * 180))}px` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* X Axis Labels */}
+                  <div className="flex justify-around pl-8 pr-2 sm:pr-6 pt-3 text-center text-xs font-bold text-zinc-900 select-none">
+                    <span className="w-10 sm:w-14">Calories</span>
+                    <span className="w-10 sm:w-14">Fat</span>
+                    <span className="w-10 sm:w-14">Carbs</span>
+                    <span className="w-10 sm:w-14">Protein</span>
+                    <span className="w-10 sm:w-14">Sugar</span>
+                  </div>
+
+                </div>
+              </div>
+            </section>
+
+            {/* BOTTOM ACTIONS: FILE COMPLAINT (WITH LOUDSPEAKER ICON) */}
+            <div className="pt-2 space-y-3 pb-8">
+              <button
+                onClick={onOpenComplaint ? onOpenComplaint : onOpenNotice}
+                className="w-full bg-[#131722] hover:bg-black text-white py-4 px-6 rounded-2xl font-black text-sm sm:text-base tracking-widest uppercase flex items-center justify-center gap-3 shadow-xl transition-all active:scale-[0.98] border border-zinc-800 cursor-pointer"
+              >
+                <Megaphone className="w-5 h-5 text-white stroke-[2.5]" />
+                <span>FILE COMPLAINT</span>
+              </button>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={onOpenNotice}
+                  className="flex-1 py-3 px-4 rounded-xl bg-white hover:bg-zinc-100 text-zinc-800 border border-zinc-300 font-bold text-xs text-center transition-colors shadow-2xs cursor-pointer"
+                >
+                  {isLawful ? 'Compliance Certificate' : 'Rule 32 Notice'}
+                </button>
+                {onRescan && (
+                  <button
+                    onClick={onRescan}
+                    className="py-3 px-5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-800 border border-zinc-300 font-bold text-xs flex items-center justify-center gap-2 transition-colors shadow-2xs cursor-pointer"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 text-zinc-500" />
+                    <span>Rescan</span>
+                  </button>
+                )}
+              </div>
             </div>
 
           </div>
@@ -823,7 +841,7 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
                 {selectedMandateId && (
                   <button
                     onClick={() => setSelectedMandateId(null)}
-                    className="text-xs font-bold text-rose-600 hover:text-rose-800"
+                    className="text-xs font-bold text-rose-600 hover:text-rose-800 cursor-pointer"
                   >
                     Clear Spotlight
                   </button>
@@ -839,7 +857,7 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
                       key={idx}
                       type="button"
                       onClick={() => setSelectedPanelIndex(idx)}
-                      className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                      className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                         selectedPanelIndex === idx
                           ? 'bg-black text-white shadow-2xs'
                           : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
