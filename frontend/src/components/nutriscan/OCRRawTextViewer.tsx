@@ -41,11 +41,11 @@ export const OCRRawTextViewer: React.FC<OCRRawTextViewerProps> = ({
       </div>
 
       {/* Raw OCR Text Box */}
-      <div className="bg-[#0E1118] rounded-2xl p-4 border border-zinc-800 font-mono text-xs text-zinc-300 max-h-[220px] overflow-y-auto whitespace-pre-wrap leading-relaxed select-text shadow-inner">
+      <div className="bg-zinc-100 rounded-2xl p-4 border border-zinc-200 font-mono text-xs text-zinc-800 max-h-[220px] overflow-y-auto whitespace-pre-wrap leading-relaxed select-text shadow-inner">
         {rawText ? (
           rawText
         ) : (
-          <span className="text-zinc-600 italic">
+          <span className="text-zinc-500 italic">
             [No direct text string captured. Scan or upload a package label to inspect optical text tokens.]
           </span>
         )}

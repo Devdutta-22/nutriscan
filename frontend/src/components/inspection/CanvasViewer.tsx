@@ -70,56 +70,56 @@ export const CanvasViewer: React.FC<CanvasViewerProps> = ({
   };
 
   return (
-    <div className="relative w-full h-[520px] lg:h-[640px] rounded-2xl bg-[#0b0d13] border border-white/10 overflow-hidden flex flex-col shadow-2xl">
+    <div className="relative w-full h-[520px] lg:h-[640px] rounded-2xl bg-zinc-100/90 border border-zinc-200/90 overflow-hidden flex flex-col shadow-sm">
       {/* Viewport Floating Header Controls */}
       <div className="absolute top-3 left-3 right-3 z-30 flex items-center justify-between pointer-events-none">
-        <div className="flex items-center gap-2 pointer-events-auto bg-zinc-900/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 text-xs text-zinc-300 shadow-lg">
-          <Layers className="w-3.5 h-3.5 text-emerald-400" />
+        <div className="flex items-center gap-2 pointer-events-auto bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-zinc-200 text-xs text-zinc-700 shadow-md">
+          <Layers className="w-3.5 h-3.5 text-emerald-600" />
           <span className="font-medium">Interactive Physical Overlay</span>
-          <span className="text-zinc-500">•</span>
-          <span className="font-mono text-[11px] text-zinc-400">
+          <span className="text-zinc-400">•</span>
+          <span className="font-mono text-[11px] text-zinc-600">
             {boundingBoxes.length} Mandates Tracked
           </span>
         </div>
 
         {/* Zoom and Overlay Toggle Dock */}
-        <div className="flex items-center gap-1 pointer-events-auto bg-zinc-900/80 backdrop-blur-md p-1 rounded-xl border border-white/10 shadow-lg">
+        <div className="flex items-center gap-1 pointer-events-auto bg-white/90 backdrop-blur-md p-1 rounded-xl border border-zinc-200 shadow-md">
           <button
             onClick={() => setShowOverlays(!showOverlays)}
             title={showOverlays ? 'Hide Bounding Boxes' : 'Show Bounding Boxes'}
             className={`p-1.5 rounded-lg transition-colors ${
-              showOverlays ? 'bg-emerald-500/20 text-emerald-300' : 'text-zinc-400 hover:bg-zinc-800'
+              showOverlays ? 'bg-emerald-100 text-emerald-800' : 'text-zinc-500 hover:bg-zinc-100'
             }`}
           >
             {showOverlays ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
           </button>
 
-          <div className="w-[1px] h-4 bg-white/10 mx-0.5" />
+          <div className="w-[1px] h-4 bg-zinc-200 mx-0.5" />
 
           <button
             onClick={handleZoomIn}
             title="Zoom In"
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+            className="p-1.5 rounded-lg text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition-colors"
           >
             <ZoomIn className="w-4 h-4" />
           </button>
-          <span className="px-1.5 text-[11px] font-mono text-zinc-400 font-semibold select-none">
+          <span className="px-1.5 text-[11px] font-mono text-zinc-700 font-semibold select-none">
             {Math.round(zoom * 100)}%
           </span>
           <button
             onClick={handleZoomOut}
             title="Zoom Out"
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+            className="p-1.5 rounded-lg text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition-colors"
           >
             <ZoomOut className="w-4 h-4" />
           </button>
 
-          <div className="w-[1px] h-4 bg-white/10 mx-0.5" />
+          <div className="w-[1px] h-4 bg-zinc-200 mx-0.5" />
 
           <button
             onClick={handleReset}
             title="Reset Zoom & Pan"
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+            className="p-1.5 rounded-lg text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition-colors"
           >
             <RotateCcw className="w-4 h-4" />
           </button>
@@ -139,9 +139,9 @@ export const CanvasViewer: React.FC<CanvasViewerProps> = ({
       >
         {/* Subtle coordinate grid pattern */}
         <div
-          className="absolute inset-0 opacity-[0.03] pointer-events-none"
+          className="absolute inset-0 opacity-[0.06] pointer-events-none"
           style={{
-            backgroundImage: `radial-gradient(#fff 1px, transparent 1px)`,
+            backgroundImage: `radial-gradient(#000 1px, transparent 1px)`,
             backgroundSize: '24px 24px',
           }}
         />
@@ -272,23 +272,23 @@ export const CanvasViewer: React.FC<CanvasViewerProps> = ({
       </div>
 
       {/* Footer Legend Bar */}
-      <div className="absolute bottom-3 left-3 right-3 z-30 flex items-center justify-between bg-zinc-900/80 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/10 text-xs pointer-events-none">
+      <div className="absolute bottom-3 left-3 right-3 z-30 flex items-center justify-between bg-white/90 backdrop-blur-md px-3.5 py-2 rounded-xl border border-zinc-200 text-xs pointer-events-none shadow-md">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-            <span className="text-zinc-300 font-medium">Compliant</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-xs" />
+            <span className="text-zinc-700 font-medium">Compliant</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.5)]" />
-            <span className="text-zinc-300 font-medium">Format Warning</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-xs" />
+            <span className="text-zinc-700 font-medium">Format Warning</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)] animate-pulse" />
-            <span className="text-zinc-300 font-medium">Statutory Contravention</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-xs animate-pulse" />
+            <span className="text-zinc-700 font-medium">Statutory Contravention</span>
           </div>
         </div>
 
-        <span className="text-[11px] text-zinc-400 hidden sm:inline-block font-mono">
+        <span className="text-[11px] text-zinc-500 hidden sm:inline-block font-mono">
           Click box to inspect statutory clause
         </span>
       </div>

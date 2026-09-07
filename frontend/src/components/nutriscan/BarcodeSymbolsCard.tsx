@@ -47,30 +47,30 @@ export const BarcodeSymbolsCard: React.FC<Props> = ({ barcode, qr, symbols }) =>
   );
 
   return (
-    <div className="bg-[#111827]/95 rounded-2xl p-6 sm:p-7 border border-slate-800/90 shadow-xl space-y-6 text-slate-100">
+    <div className="bg-white rounded-2xl p-6 sm:p-7 border border-zinc-200/90 shadow-sm space-y-6 text-zinc-900">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-zinc-100">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-indigo-950/80 border border-indigo-800/60 text-indigo-400 flex items-center justify-center shrink-0 shadow-xs">
+          <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 flex items-center justify-center shrink-0 shadow-xs">
             <BarcodeIcon className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-black uppercase tracking-wider text-white">
+              <h3 className="text-sm font-black uppercase tracking-wider text-zinc-900">
                 Barcode, QR Code &amp; Statutory Packaging Symbols
               </h3>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-950 text-indigo-300 uppercase tracking-wide border border-indigo-800/60">
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-50 text-indigo-700 uppercase tracking-wide border border-indigo-200">
                 Automated Inspection
               </span>
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-zinc-500 mt-0.5">
               Verified against GS1 General Specifications, G.S.R. 524(E) Electronic Disclosures, and FSSAI/BIS Statutory Mandates
             </p>
           </div>
         </div>
 
         {hasAnyData && (
-          <span className="text-xs font-semibold text-slate-500 self-start sm:self-auto font-mono">
+          <span className="text-xs font-semibold text-zinc-500 self-start sm:self-auto font-mono">
             EAN / QR / Badges Active
           </span>
         )}
@@ -80,23 +80,23 @@ export const BarcodeSymbolsCard: React.FC<Props> = ({ barcode, qr, symbols }) =>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         
         {/* 1. Barcode Verification Tile */}
-        <div className="bg-[#161F30]/80 p-5 rounded-xl border border-slate-700/60 flex flex-col justify-between space-y-4">
+        <div className="bg-zinc-50/70 p-5 rounded-xl border border-zinc-200/80 flex flex-col justify-between space-y-4">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <BarcodeIcon className="w-4 h-4 text-slate-400" />
-                <span className="text-xs font-black uppercase tracking-wider text-slate-200">
+                <BarcodeIcon className="w-4 h-4 text-zinc-500" />
+                <span className="text-xs font-black uppercase tracking-wider text-zinc-800">
                   1D Barcode (GS1 GTIN)
                 </span>
               </div>
 
               {barcode?.detected ? (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-950 text-emerald-400 border border-emerald-800/60 flex items-center gap-1">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1">
                   <CheckCircle2 className="w-3 h-3" />
                   <span>DETECTED ({barcode.type || 'EAN-13'})</span>
                 </span>
               ) : (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#0B0F17] text-slate-400 border border-slate-800">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-200 text-zinc-600 border border-zinc-300">
                   NOT DETECTED
                 </span>
               )}
