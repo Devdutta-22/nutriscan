@@ -4,41 +4,20 @@ from typing import Optional, List, Dict, Any
 import json
 import uuid
 import base64
-import os
 import time
 from datetime import datetime, timezone
 from app.data.presets import DEMO_PRESETS
 from app.compliance.synthesizer import AuditSynthesizer
+from app.api.storage import (
+    get_specimens_from_db,
+    insert_specimen_to_db,
+    delete_specimen_from_db,
+    upload_image_to_r2,
+    is_r2_enabled,
+    is_supabase_enabled
+)
 
 router = APIRouter(prefix="/audit", tags=["Audit"])
-
-# Persistent file path for stored specimens
-DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "data"))
-SPECIMENS_FILE = os.path.join(DATA_DIR, "specimens.json")
-
-def _load_stored_specimens() -> List[Dict[str, Any]]:
-    os.makedirs(DATA_DIR, exist_ok=True)
-    if not os.path.exists(SPECIMENS_FILE):
-        return []
-    try:
-        with open(SPECIMENS_FILE, "r", encoding="utf-8") as f:
-            content = f.read().strip()
-            if not content:
-                return []
-            return json.loads(content)
-    except Exception as e:
-        print(f"Error reading {SPECIMENS_FILE}: {e}")
-        return []
-
-def _save_stored_specimens(records: List[Dict[str, Any]]) -> None:
-    os.makedirs(DATA_DIR, exist_ok=True)
-    try:
-        # Keep latest 100 specimens
-        trimmed = records[:100]
-        with open(SPECIMENS_FILE, "w", encoding="utf-8") as f:
-            json.dump(trimmed, f, ensure_ascii=False, indent=2)
-    except Exception as e:
-        print(f"Error writing to {SPECIMENS_FILE}: {e}")
 
 class AuditRequest(BaseModel):
     preset_id: Optional[str] = None
@@ -60,24 +39,23 @@ async def get_presets():
 @router.get("/specimens")
 async def get_stored_specimens(limit: int = Query(50, ge=1, le=100)):
     """
-    Returns all permanently stored label records and uploaded images from the database.
+    Returns all permanently stored label records from Supabase database.
     """
-    records = _load_stored_specimens()
+    records = get_specimens_from_db(limit=limit)
     return {
         "count": len(records),
-        "specimens": records[:limit]
+        "supabase_connected": is_supabase_enabled(),
+        "specimens": records
     }
 
 @router.delete("/specimens/{specimen_id}")
 async def delete_stored_specimen(specimen_id: str):
     """
-    Deletes a stored specimen record by ID.
+    Deletes a stored specimen record by ID from Supabase.
     """
-    records = _load_stored_specimens()
-    filtered = [r for r in records if r.get("id") != specimen_id and r.get("audit_id") != specimen_id]
-    if len(filtered) == len(records):
+    success = delete_specimen_from_db(specimen_id)
+    if not success:
         raise HTTPException(status_code=404, detail=f"Specimen '{specimen_id}' not found")
-    _save_stored_specimens(filtered)
     return {"success": True, "message": f"Specimen {specimen_id} deleted"}
 
 @router.post("/run")
@@ -90,7 +68,6 @@ async def run_audit(req: AuditRequest):
         if not preset:
             raise HTTPException(status_code=404, detail=f"Preset '{req.preset_id}' not found")
 
-        # Use async LLM-enhanced synthesis
         report = await AuditSynthesizer.synthesize_report_with_llm(
             product_name=preset["title"],
             label_data=preset["label_data"],
@@ -102,11 +79,9 @@ async def run_audit(req: AuditRequest):
         report["bounding_boxes"] = preset.get("bounding_boxes", [])
         return report
 
-    # Ad-hoc audit with provided label data
     product_name = req.product_name or "Custom Packaged Commodity"
     label_data = req.label_data or {}
 
-    # Use async LLM-enhanced synthesis
     report = await AuditSynthesizer.synthesize_report_with_llm(
         product_name=product_name,
         label_data=label_data,
@@ -127,9 +102,10 @@ async def upload_and_audit(
     label_data_json: Optional[str] = Form(None)
 ):
     """
-    Multi-Image & Single-Image upload endpoint for label compliance audit.
-    Accepts 1 to 5 images representing different panels of the same physical product.
-    Permanently saves the uploaded images, extracted labels, and compliance audit into database.
+    Multi-Image upload endpoint for label compliance audit.
+    1. Uploads label image to Cloudflare R2 (or Data URL fallback).
+    2. Runs Gemini Vision & Statutory RAG audit.
+    3. Saves record into Supabase PostgreSQL.
     """
     uploaded_files: List[UploadFile] = []
     if files:
@@ -141,7 +117,7 @@ async def upload_and_audit(
         raise HTTPException(status_code=400, detail="No image file provided for audit")
 
     images_payload: List[tuple[bytes, str]] = []
-    base64_images: List[str] = []
+    final_image_urls: List[str] = []
     total_size_kb = 0.0
     primary_filename = uploaded_files[0].filename or "Specimen"
 
@@ -152,9 +128,17 @@ async def upload_and_audit(
         mime = f.content_type or "image/jpeg"
         images_payload.append((contents, mime))
         
-        # Convert to persistent Data URL for direct zero-latency frontend image display
-        b64 = base64.b64encode(contents).decode("utf-8")
-        base64_images.append(f"data:{mime};base64,{b64}")
+        # 1. Try Cloudflare R2 upload if configured
+        r2_url = None
+        if is_r2_enabled():
+            r2_url = await upload_image_to_r2(contents, f.filename or "specimen.jpg", mime)
+
+        # 2. Fallback to Data URL if R2 is not configured
+        if r2_url:
+            final_image_urls.append(r2_url)
+        else:
+            b64 = base64.b64encode(contents).decode("utf-8")
+            final_image_urls.append(f"data:{mime};base64,{b64}")
 
     label_data = {}
     if label_data_json:
@@ -163,7 +147,6 @@ async def upload_and_audit(
         except json.JSONDecodeError:
             label_data = {}
 
-    # If Gemini Vision is available, run multimodal extraction on ALL photos together
     if gemini_engine.is_available and len(images_payload) > 0:
         vision_fields = await gemini_engine.extract_label_from_images(images_payload)
         if vision_fields:
@@ -171,7 +154,6 @@ async def upload_and_audit(
                 if v and (not label_data.get(k) or str(label_data.get(k)).strip().lower() in ["", "none", "missing", "n/a", "[not found]"]):
                     label_data[k] = v
 
-    # Fallback to product_name or filename if generic name still missing
     if not label_data.get("generic_name"):
         clean_name = primary_filename.replace(".jpg", "").replace(".png", "").replace(".jpeg", "")
         if not clean_name.startswith("IMG") and not clean_name.startswith("upload") and not clean_name.startswith("Camera"):
@@ -195,13 +177,12 @@ async def upload_and_audit(
     report["is_live_upload"] = True
     report["panel_count"] = len(uploaded_files)
 
-    # Attach permanent Data URLs for zero-loss image display
-    if base64_images:
-        report["image_url"] = base64_images[0]
-        if len(base64_images) > 1:
-            report["additional_image_urls"] = base64_images[1:]
+    if final_image_urls:
+        report["image_url"] = final_image_urls[0]
+        if len(final_image_urls) > 1:
+            report["additional_image_urls"] = final_image_urls[1:]
 
-    # Save permanently into specimens database
+    # Save permanently into Supabase PostgreSQL
     try:
         score = report.get("compliance_score", 0)
         grade = "A+" if score >= 90 else ("B-" if score >= 70 else "C")
@@ -216,17 +197,15 @@ async def upload_and_audit(
             "legal_status": report.get("legal_status"),
             "status_text": report.get("status_text"),
             "created_at": datetime.now(timezone.utc).isoformat(),
-            "image_url": base64_images[0] if base64_images else None,
-            "additional_image_urls": base64_images[1:] if len(base64_images) > 1 else [],
+            "image_url": final_image_urls[0] if final_image_urls else None,
+            "additional_image_urls": final_image_urls[1:] if len(final_image_urls) > 1 else [],
             "panel_count": len(uploaded_files),
             "summary": report.get("summary", {}),
             "report": report
         }
 
-        existing_records = _load_stored_specimens()
-        # Prepend new specimen at index 0 (newest first)
-        _save_stored_specimens([specimen_entry] + existing_records)
+        insert_specimen_to_db(specimen_entry)
     except Exception as err:
-        print(f"Failed to persist specimen record to database: {err}")
+        print(f"Failed to persist specimen record to Supabase: {err}")
 
     return report
