@@ -1,13 +1,44 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Query
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 import json
 import uuid
+import base64
+import os
+import time
+from datetime import datetime, timezone
 from app.data.presets import DEMO_PRESETS
 from app.compliance.synthesizer import AuditSynthesizer
 
 router = APIRouter(prefix="/audit", tags=["Audit"])
 
+# Persistent file path for stored specimens
+DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "data"))
+SPECIMENS_FILE = os.path.join(DATA_DIR, "specimens.json")
+
+def _load_stored_specimens() -> List[Dict[str, Any]]:
+    os.makedirs(DATA_DIR, exist_ok=True)
+    if not os.path.exists(SPECIMENS_FILE):
+        return []
+    try:
+        with open(SPECIMENS_FILE, "r", encoding="utf-8") as f:
+            content = f.read().strip()
+            if not content:
+                return []
+            return json.loads(content)
+    except Exception as e:
+        print(f"Error reading {SPECIMENS_FILE}: {e}")
+        return []
+
+def _save_stored_specimens(records: List[Dict[str, Any]]) -> None:
+    os.makedirs(DATA_DIR, exist_ok=True)
+    try:
+        # Keep latest 100 specimens
+        trimmed = records[:100]
+        with open(SPECIMENS_FILE, "w", encoding="utf-8") as f:
+            json.dump(trimmed, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"Error writing to {SPECIMENS_FILE}: {e}")
 
 class AuditRequest(BaseModel):
     preset_id: Optional[str] = None
@@ -15,7 +46,6 @@ class AuditRequest(BaseModel):
     label_data: Optional[Dict[str, Any]] = None
     bounding_boxes: Optional[List[Dict[str, Any]]] = None
     product_category: Optional[str] = "general"
-
 
 @router.get("/presets")
 async def get_presets():
@@ -27,6 +57,28 @@ async def get_presets():
         "presets": DEMO_PRESETS
     }
 
+@router.get("/specimens")
+async def get_stored_specimens(limit: int = Query(50, ge=1, le=100)):
+    """
+    Returns all permanently stored label records and uploaded images from the database.
+    """
+    records = _load_stored_specimens()
+    return {
+        "count": len(records),
+        "specimens": records[:limit]
+    }
+
+@router.delete("/specimens/{specimen_id}")
+async def delete_stored_specimen(specimen_id: str):
+    """
+    Deletes a stored specimen record by ID.
+    """
+    records = _load_stored_specimens()
+    filtered = [r for r in records if r.get("id") != specimen_id and r.get("audit_id") != specimen_id]
+    if len(filtered) == len(records):
+        raise HTTPException(status_code=404, detail=f"Specimen '{specimen_id}' not found")
+    _save_stored_specimens(filtered)
+    return {"success": True, "message": f"Specimen {specimen_id} deleted"}
 
 @router.post("/run")
 async def run_audit(req: AuditRequest):
@@ -64,9 +116,7 @@ async def run_audit(req: AuditRequest):
     report["bounding_boxes"] = req.bounding_boxes or []
     return report
 
-
 from app.rag.gemini_engine import gemini_engine
-
 
 @router.post("/upload")
 async def upload_and_audit(
@@ -78,13 +128,9 @@ async def upload_and_audit(
 ):
     """
     Multi-Image & Single-Image upload endpoint for label compliance audit.
-    Accepts 1 to 5 images representing different panels of the same physical product
-    (e.g., Front Display Panel, Back Information Panel, MRP top/bottom flap, Side Nutritional Box).
-    
-    1. Multi-Image Multimodal Vision: Reads declarations across all panels simultaneously.
-    2. Deterministic Legal Engine: Synthesizes statutory compliance, checks Rule 6(11) USP paise math, PIN code, and Rule 32 penalties.
+    Accepts 1 to 5 images representing different panels of the same physical product.
+    Permanently saves the uploaded images, extracted labels, and compliance audit into database.
     """
-    # Collect all uploaded files
     uploaded_files: List[UploadFile] = []
     if files:
         uploaded_files.extend(files)
@@ -95,6 +141,7 @@ async def upload_and_audit(
         raise HTTPException(status_code=400, detail="No image file provided for audit")
 
     images_payload: List[tuple[bytes, str]] = []
+    base64_images: List[str] = []
     total_size_kb = 0.0
     primary_filename = uploaded_files[0].filename or "Specimen"
 
@@ -102,7 +149,12 @@ async def upload_and_audit(
         contents = await f.read()
         size_kb = round(len(contents) / 1024, 1)
         total_size_kb += size_kb
-        images_payload.append((contents, f.content_type or "image/jpeg"))
+        mime = f.content_type or "image/jpeg"
+        images_payload.append((contents, mime))
+        
+        # Convert to persistent Data URL for direct zero-latency frontend image display
+        b64 = base64.b64encode(contents).decode("utf-8")
+        base64_images.append(f"data:{mime};base64,{b64}")
 
     label_data = {}
     if label_data_json:
@@ -115,7 +167,6 @@ async def upload_and_audit(
     if gemini_engine.is_available and len(images_payload) > 0:
         vision_fields = await gemini_engine.extract_label_from_images(images_payload)
         if vision_fields:
-            # Merge vision fields: populate any empty/null fields
             for k, v in vision_fields.items():
                 if v and (not label_data.get(k) or str(label_data.get(k)).strip().lower() in ["", "none", "missing", "n/a", "[not found]"]):
                     label_data[k] = v
@@ -143,4 +194,39 @@ async def upload_and_audit(
     report["bounding_boxes"] = bounding_boxes
     report["is_live_upload"] = True
     report["panel_count"] = len(uploaded_files)
+
+    # Attach permanent Data URLs for zero-loss image display
+    if base64_images:
+        report["image_url"] = base64_images[0]
+        if len(base64_images) > 1:
+            report["additional_image_urls"] = base64_images[1:]
+
+    # Save permanently into specimens database
+    try:
+        score = report.get("compliance_score", 0)
+        grade = "A+" if score >= 90 else ("B-" if score >= 70 else "C")
+        
+        specimen_entry = {
+            "id": report.get("audit_id") or f"specimen-{int(time.time() * 1000)}",
+            "audit_id": report.get("audit_id"),
+            "product_name": report.get("product_name"),
+            "product_category": product_category or "Packaged Commodity",
+            "compliance_score": score,
+            "grade": grade,
+            "legal_status": report.get("legal_status"),
+            "status_text": report.get("status_text"),
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "image_url": base64_images[0] if base64_images else None,
+            "additional_image_urls": base64_images[1:] if len(base64_images) > 1 else [],
+            "panel_count": len(uploaded_files),
+            "summary": report.get("summary", {}),
+            "report": report
+        }
+
+        existing_records = _load_stored_specimens()
+        # Prepend new specimen at index 0 (newest first)
+        _save_stored_specimens([specimen_entry] + existing_records)
+    except Exception as err:
+        print(f"Failed to persist specimen record to database: {err}")
+
     return report

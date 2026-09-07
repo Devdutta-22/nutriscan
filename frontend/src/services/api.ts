@@ -8,6 +8,30 @@ import { ClientBarcodeEngine } from './barcodeEngine';
 const API_BASE = '/api';
 
 export class FairPackAPI {
+  static async getStoredSpecimens(limit: number = 50): Promise<any[]> {
+    try {
+      const res = await fetch(`${API_BASE}/audit/specimens?limit=${limit}`);
+      if (res.ok) {
+        const data = await res.json();
+        return data.specimens || [];
+      }
+    } catch {
+      // Fallback
+    }
+    return [];
+  }
+
+  static async deleteStoredSpecimen(specimenId: string): Promise<boolean> {
+    try {
+      const res = await fetch(`${API_BASE}/audit/specimens/${specimenId}`, {
+        method: 'DELETE',
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
   static async getPresets(): Promise<DemoPreset[]> {
     try {
       const res = await fetch(`${API_BASE}/audit/presets`);
@@ -88,8 +112,13 @@ export class FairPackAPI {
 
         if (uploadRes.ok) {
           const report = await uploadRes.json();
-          report.image_url = previewUrl;
-          report.additional_image_urls = files.slice(1).map((f) => URL.createObjectURL(f));
+          // Use permanent image_url from backend if returned, else local preview
+          if (!report.image_url) {
+            report.image_url = previewUrl;
+          }
+          if (!report.additional_image_urls || report.additional_image_urls.length === 0) {
+            report.additional_image_urls = files.slice(1).map((f) => URL.createObjectURL(f));
+          }
 
           // Merge local browser barcode/QR detection if backend didn't pick it up
           const localCodes = await localCodeDetectionPromise;
@@ -100,7 +129,7 @@ export class FairPackAPI {
             report.qr_data = localCodes.qr;
           }
 
-          onProgress?.('Audit complete!', 100);
+          onProgress?.('Audit complete & specimen stored permanently!', 100);
           return report;
         }
       } catch (uploadErr) {

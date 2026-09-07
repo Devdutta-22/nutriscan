@@ -46,14 +46,14 @@ export const TodaySnapshot: React.FC<TodaySnapshotProps> = ({ report, onViewAll,
       {/* Section Header */}
       <div className="flex items-center justify-between pb-2.5">
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse" />
-          <h3 className="text-base font-extrabold text-zinc-900 tracking-tight">
-            Active Audit Result &amp; Visual Breakdown
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <h3 className="text-base font-extrabold text-white tracking-tight">
+            Active Specimen Telemetry &amp; Breakdown
           </h3>
         </div>
         <button
           onClick={onInspect || onViewAll}
-          className="text-xs font-black text-[#FF2A85] uppercase tracking-wider hover:opacity-80 transition-opacity flex items-center gap-1"
+          className="text-xs font-black text-cyan-400 hover:text-cyan-300 font-mono tracking-wider transition-colors flex items-center gap-1"
         >
           <span>FULL REPORT</span>
           <ArrowRight className="w-3.5 h-3.5" />
@@ -61,24 +61,24 @@ export const TodaySnapshot: React.FC<TodaySnapshotProps> = ({ report, onViewAll,
       </div>
 
       {/* Main Result Card */}
-      <div className="bg-white rounded-3xl p-5 border border-zinc-200/90 shadow-sm hover:shadow-md transition-all space-y-4">
+      <div className="bg-[#111827] rounded-3xl p-5 border border-slate-800 shadow-xl shadow-black/40 hover:border-slate-700 transition-all space-y-4">
         
         {/* Product Title & Legal Seal */}
-        <div className="flex items-center justify-between gap-3 pb-3 border-b border-zinc-100">
+        <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
           <div className="min-w-0">
-            <span className="text-[10px] uppercase font-mono font-bold text-zinc-400 tracking-wider">
+            <span className="text-[10px] uppercase font-mono font-bold text-slate-400 tracking-wider">
               Scanned Packaging Specimen
             </span>
-            <h4 className="text-base font-black text-zinc-900 truncate leading-tight mt-0.5">
+            <h4 className="text-base font-black text-white truncate leading-tight mt-0.5">
               {report.product_name}
             </h4>
           </div>
 
           <span
-            className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0 ${
+            className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0 font-mono ${
               gradeInfo.lawfulForSale
-                ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                : 'bg-rose-100 text-rose-800 border border-rose-300'
+                ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/30'
+                : 'bg-rose-500/10 text-rose-300 border border-rose-500/30'
             }`}
           >
             {gradeInfo.lawfulForSale ? 'LAWFUL TO SELL' : 'UNLAWFUL FOR SALE'}
@@ -92,7 +92,7 @@ export const TodaySnapshot: React.FC<TodaySnapshotProps> = ({ report, onViewAll,
           <div className="relative flex items-center justify-center shrink-0 w-32 h-32">
             <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 100 100">
               {/* Background track */}
-              <circle cx="50" cy="50" r={radius} stroke="#f4f4f5" strokeWidth={strokeWidth} fill="none" />
+              <circle cx="50" cy="50" r={radius} stroke="#1e293b" strokeWidth={strokeWidth} fill="none" />
 
               {/* Green Arc: Compliant */}
               {compliant > 0 && (
@@ -136,7 +136,7 @@ export const TodaySnapshot: React.FC<TodaySnapshotProps> = ({ report, onViewAll,
                   cx="50"
                   cy="50"
                   r={radius}
-                  stroke="#FF2A85"
+                  stroke="#f43f5e"
                   strokeWidth={hoveredSlice === 'violations' ? strokeWidth + 3 : strokeWidth}
                   strokeDasharray={`${strokeViolation} ${circumference}`}
                   strokeDashoffset={offsetViolation}
@@ -151,31 +151,31 @@ export const TodaySnapshot: React.FC<TodaySnapshotProps> = ({ report, onViewAll,
 
             {/* Center Seal: Grade & Score */}
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-2xl font-black text-zinc-900 leading-none">
+              <span className="text-2xl font-black text-white leading-none">
                 {gradeInfo.grade}
               </span>
-              <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mt-0.5">
+              <span className="text-[9px] font-mono font-bold text-slate-400 uppercase tracking-widest mt-0.5">
                 {report.compliance_score}%
               </span>
             </div>
           </div>
 
           {/* Right: Legend Breakdown Grid */}
-          <div className="space-y-2 w-full sm:w-auto">
+          <div className="space-y-2 w-full sm:w-auto font-mono">
             <div
               onMouseEnter={() => setHoveredSlice('compliant')}
               onMouseLeave={() => setHoveredSlice(null)}
               className={`flex items-center justify-between gap-3 text-xs px-3 py-1.5 rounded-xl border transition-all ${
                 hoveredSlice === 'compliant'
-                  ? 'bg-emerald-100/70 border-emerald-300 scale-102'
-                  : 'bg-emerald-50/50 border-emerald-100'
+                  ? 'bg-emerald-500/20 border-emerald-500/50 scale-102'
+                  : 'bg-emerald-500/10 border-emerald-500/30'
               }`}
             >
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
-                <span className="font-bold text-zinc-700">Compliant Mandates</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0 shadow-xs shadow-emerald-400/50" />
+                <span className="font-bold text-emerald-300">Compliant Mandates</span>
               </div>
-              <strong className="text-emerald-700 font-extrabold font-mono">
+              <strong className="text-emerald-400 font-extrabold font-mono">
                 {compliant}/{total}
               </strong>
             </div>
@@ -185,15 +185,15 @@ export const TodaySnapshot: React.FC<TodaySnapshotProps> = ({ report, onViewAll,
               onMouseLeave={() => setHoveredSlice(null)}
               className={`flex items-center justify-between gap-3 text-xs px-3 py-1.5 rounded-xl border transition-all ${
                 hoveredSlice === 'warnings'
-                  ? 'bg-amber-100/70 border-amber-300 scale-102'
-                  : 'bg-amber-50/50 border-amber-100'
+                  ? 'bg-amber-500/20 border-amber-500/50 scale-102'
+                  : 'bg-amber-500/10 border-amber-500/30'
               }`}
             >
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" />
-                <span className="font-bold text-zinc-700">Format Advisories</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0 shadow-xs shadow-amber-400/50" />
+                <span className="font-bold text-amber-300">Format Advisories</span>
               </div>
-              <strong className="text-amber-700 font-extrabold font-mono">
+              <strong className="text-amber-400 font-extrabold font-mono">
                 {warnings}
               </strong>
             </div>
@@ -203,15 +203,15 @@ export const TodaySnapshot: React.FC<TodaySnapshotProps> = ({ report, onViewAll,
               onMouseLeave={() => setHoveredSlice(null)}
               className={`flex items-center justify-between gap-3 text-xs px-3 py-1.5 rounded-xl border transition-all ${
                 hoveredSlice === 'violations'
-                  ? 'bg-rose-100/70 border-rose-300 scale-102'
-                  : 'bg-rose-50/50 border-rose-100'
+                  ? 'bg-rose-500/20 border-rose-500/50 scale-102'
+                  : 'bg-rose-500/10 border-rose-500/30'
               }`}
             >
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#FF2A85] shrink-0" />
-                <span className="font-bold text-zinc-700">Critical Violations</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0 shadow-xs shadow-rose-500/50" />
+                <span className="font-bold text-rose-300">Critical Violations</span>
               </div>
-              <strong className="text-rose-700 font-extrabold font-mono">
+              <strong className="text-rose-400 font-extrabold font-mono">
                 {violations}
               </strong>
             </div>
@@ -219,19 +219,19 @@ export const TodaySnapshot: React.FC<TodaySnapshotProps> = ({ report, onViewAll,
         </div>
 
         {/* 4-Domain Mini Progress Bars */}
-        <div className="pt-2 border-t border-zinc-100 space-y-2">
-          <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">
+        <div className="pt-2 border-t border-slate-800/80 space-y-2">
+          <span className="text-[10px] uppercase font-mono font-bold text-slate-400 tracking-wider">
             Domain Compliance Scores (4 Pillars)
           </span>
 
           <div className="grid grid-cols-2 gap-2">
             {domainScores.map((domain) => (
-              <div key={domain.id} className="bg-zinc-50 p-2.5 rounded-xl border border-zinc-100 space-y-1">
+              <div key={domain.id} className="bg-[#161F30] p-2.5 rounded-xl border border-slate-800 space-y-1">
                 <div className="flex items-center justify-between text-[11px]">
-                  <span className="font-bold text-zinc-700 truncate">{domain.name}</span>
-                  <span className="font-mono font-extrabold text-zinc-900">{domain.score}%</span>
+                  <span className="font-bold text-slate-300 truncate">{domain.name}</span>
+                  <span className="font-mono font-extrabold text-cyan-400">{domain.score}%</span>
                 </div>
-                <div className="w-full bg-zinc-200 h-1.5 rounded-full overflow-hidden">
+                <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{ width: `${domain.score}%`, backgroundColor: domain.color }}
@@ -245,10 +245,10 @@ export const TodaySnapshot: React.FC<TodaySnapshotProps> = ({ report, onViewAll,
         {/* Interactive CTA to open Full Inspection Drawer */}
         <button
           onClick={onInspect || onViewAll}
-          className="w-full py-2.5 rounded-2xl bg-zinc-900 hover:bg-zinc-800 text-white font-black text-xs flex items-center justify-center gap-2 shadow-sm transition-all active:scale-98"
+          className="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20 transition-all active:scale-98"
         >
           <FileText className="w-3.5 h-3.5" />
-          <span>Open Interactive Inspection Modal (Grade &amp; All 11 Mandates)</span>
+          <span>Launch Full Statutory Audit Report (All 11 Mandates)</span>
         </button>
       </div>
     </div>

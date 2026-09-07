@@ -24,16 +24,15 @@ export const JagoGrahakJagoLogo: React.FC<{ className?: string; size?: number }>
         height={size}
         className="object-contain shrink-0 drop-shadow-xs"
         onError={(e) => {
-          // Fallback if image fails to load
           const target = e.currentTarget;
           target.style.display = 'none';
         }}
       />
       <div className="hidden sm:flex flex-col text-left leading-none">
-        <span className="text-[11px] font-black text-amber-950 tracking-tight">
+        <span className="text-[11px] font-black text-amber-300 tracking-tight">
           जागो ग्राहक जागो
         </span>
-        <span className="text-[8px] font-extrabold text-amber-700 tracking-wider">
+        <span className="text-[8px] font-extrabold text-amber-500 tracking-wider">
           JAGO GRAHAK JAGO
         </span>
       </div>
@@ -46,19 +45,19 @@ export const NationalConsumerHelplineBadge: React.FC<{ className?: string }> = (
 }) => {
   return (
     <div
-      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/10 to-amber-600/15 border border-amber-500/30 text-amber-950 shrink-0 select-none shadow-xs ${className}`}
+      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 shrink-0 select-none shadow-xs ${className}`}
       title="National Consumer Helpline - 1915 or 1800-11-4000"
     >
-      <div className="w-6 h-6 rounded-full bg-[#EAB308] text-zinc-950 flex items-center justify-center font-black text-[11px] shadow-xs shrink-0">
+      <div className="w-6 h-6 rounded-full bg-amber-400 text-slate-950 flex items-center justify-center font-black text-[11px] shadow-xs shrink-0">
         📞
       </div>
       <div className="flex flex-col text-left leading-none">
-        <div className="flex items-center gap-1.5 font-mono font-black text-[11px] text-zinc-900">
-          <span className="bg-amber-400/30 px-1 py-0.5 rounded text-zinc-950">1915</span>
-          <span className="text-zinc-400 text-[8px]">OR</span>
-          <span className="text-[10px]">1800-11-4000</span>
+        <div className="flex items-center gap-1.5 font-mono font-black text-[11px] text-white">
+          <span className="bg-amber-400/20 text-amber-300 border border-amber-400/30 px-1 py-0.5 rounded">1915</span>
+          <span className="text-slate-500 text-[8px]">OR</span>
+          <span className="text-[10px] text-slate-200">1800-11-4000</span>
         </div>
-        <span className="text-[7.5px] font-extrabold text-amber-900 uppercase tracking-wider mt-0.5">
+        <span className="text-[7.5px] font-extrabold text-amber-400 uppercase tracking-wider mt-0.5">
           National Consumer Helpline (NCH)
         </span>
       </div>
@@ -80,17 +79,17 @@ export const AshokaEmblem: React.FC<{ className?: string; size?: number }> = ({
         alt="State Emblem of India"
         width={size}
         height={Math.round((size * 320) / 220)}
-        className="object-contain shrink-0 max-h-10"
+        className="object-contain shrink-0 max-h-10 drop-shadow-md"
         onError={(e) => {
           const target = e.currentTarget;
           target.style.display = 'none';
         }}
       />
       <div className="flex flex-col text-left leading-none">
-        <span className="text-[11px] font-black text-zinc-900 tracking-wide">
+        <span className="text-[11px] font-black text-slate-100 tracking-wide">
           भारत सरकार
         </span>
-        <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-wider mt-0.5">
+        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider mt-0.5 font-mono">
           Govt. of India
         </span>
       </div>
@@ -101,16 +100,16 @@ export const AshokaEmblem: React.FC<{ className?: string; size?: number }> = ({
 export const GovtTrustBanner: React.FC<{ className?: string }> = ({ className = '' }) => {
   return (
     <div
-      className={`w-full bg-white/95 backdrop-blur-md rounded-2xl p-3 px-4 border border-zinc-200/90 shadow-xs flex flex-wrap items-center justify-between gap-3.5 text-xs ${className}`}
+      className={`w-full bg-[#111827]/90 backdrop-blur-md rounded-2xl p-3 px-4 border border-slate-800 shadow-xl shadow-black/30 flex flex-wrap items-center justify-between gap-3.5 text-xs ${className}`}
     >
       <div className="flex items-center gap-3.5">
         <AshokaEmblem size={30} />
-        <div className="h-7 w-px bg-zinc-200 hidden sm:block" />
+        <div className="h-7 w-px bg-slate-800 hidden sm:block" />
         <div className="hidden md:block">
-          <p className="text-[11px] font-black text-zinc-900 leading-tight">
+          <p className="text-[11px] font-black text-slate-100 leading-tight">
             उपभोक्ता मामले, खाद्य एवं सार्वजनिक वितरण मंत्रालय
           </p>
-          <p className="text-[9.5px] font-medium text-zinc-500 mt-0.5">
+          <p className="text-[9.5px] font-medium text-slate-400 mt-0.5">
             Ministry of Consumer Affairs, Food &amp; Public Distribution • Legal Metrology Division
           </p>
         </div>

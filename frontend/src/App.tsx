@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Camera } from 'lucide-react';
+import { Camera, Image as ImageIcon } from 'lucide-react';
 import { NutriHeader } from './components/nutriscan/NutriHeader';
 import { NutriHero } from './components/nutriscan/NutriHero';
 import { Interactive3DCard } from './components/nutriscan/Interactive3DCard';
@@ -41,12 +41,69 @@ export function App() {
   const [isMobileFrameMode, setIsMobileFrameMode] = useState<boolean>(false);
   const [recentItems, setRecentItems] = useState<ScannedItem[]>(RECENT_ITEMS);
 
-  // Load default preset audit on start & check query parameters
+  // Helper to format ISO date to readable relative time
+  const formatTimeAgo = (dateStr: string) => {
+    try {
+      const now = new Date();
+      const past = new Date(dateStr);
+      const diffMs = now.getTime() - past.getTime();
+      const diffMins = Math.floor(diffMs / 60000);
+      if (diffMins < 1) return 'Just now';
+      if (diffMins < 60) return `${diffMins}m ago`;
+      const diffHours = Math.floor(diffMins / 60);
+      if (diffHours < 24) return `${diffHours}h ago`;
+      const diffDays = Math.floor(diffHours / 24);
+      return `${diffDays}d ago`;
+    } catch {
+      return 'Recently';
+    }
+  };
+
+  // Convert raw database specimen to ScannedItem card format
+  const convertSpecimenToItem = (spec: any): ScannedItem => {
+    const isA = spec.compliance_score >= 90;
+    const isB = spec.compliance_score >= 70;
+    const formattedName = spec.product_name || 'Scanned Specimen';
+
+    return {
+      id: spec.id || spec.audit_id,
+      name: formattedName.charAt(0).toUpperCase() + formattedName.slice(1),
+      category: spec.product_category || 'Stored Specimen',
+      timeAgo: spec.created_at ? formatTimeAgo(spec.created_at) : 'Saved',
+      grade: spec.grade || (isA ? 'A+' : isB ? 'B-' : 'C'),
+      gradeBg: isA
+        ? 'bg-emerald-500/15 border border-emerald-500/30 shadow-sm shadow-emerald-500/10'
+        : isB
+        ? 'bg-amber-500/15 border border-amber-500/30 shadow-sm shadow-amber-500/10'
+        : 'bg-rose-500/15 border border-rose-500/30 shadow-sm shadow-rose-500/10',
+      gradeColor: isA
+        ? 'text-emerald-400 font-black font-mono'
+        : isB
+        ? 'text-amber-400 font-black font-mono'
+        : 'text-rose-400 font-black font-mono',
+      icon: ImageIcon,
+      iconBg: 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20',
+      presetId: spec.id || 'custom-upload',
+      image_url: spec.image_url || spec.report?.image_url,
+      is_database_record: true,
+      report: spec.report,
+    };
+  };
+
+  // Load default preset audit and stored database records on start
   useEffect(() => {
     async function loadInitial() {
       try {
         const initialReport = await FairPackAPI.runAudit('compliant-biscuit');
         setReport(initialReport);
+
+        // Fetch stored records from backend database
+        const storedSpecimens = await FairPackAPI.getStoredSpecimens(50);
+        if (storedSpecimens && storedSpecimens.length > 0) {
+          const dbItems = storedSpecimens.map(convertSpecimenToItem);
+          // Combine permanent records at top, followed by demo presets
+          setRecentItems([...dbItems, ...RECENT_ITEMS]);
+        }
 
         // Check if opened via PWA Shortcut action or query params
         const params = new URLSearchParams(window.location.search);
@@ -84,6 +141,16 @@ export function App() {
     }
   };
 
+  const handleDeleteItem = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await FairPackAPI.deleteStoredSpecimen(id);
+      setRecentItems((prev) => prev.filter((item) => item.id !== id));
+    } catch (err) {
+      console.error('Failed to delete specimen record:', err);
+    }
+  };
+
   const handleScanComplete = async (presetId: string) => {
     try {
       const newReport = await FairPackAPI.runAudit(presetId);
@@ -97,42 +164,61 @@ export function App() {
   const handleAuditComplete = (newReport: AuditReport) => {
     setReport(newReport);
 
-    // Create new scanned item card
+    // Create new scanned item card with dark cyber styling & permanent image thumbnail
     const isA = newReport.compliance_score >= 90;
     const isB = newReport.compliance_score >= 70;
     const formattedName = newReport.product_name || 'Scanned Specimen';
 
     const newItem: ScannedItem = {
-      id: `upload-${Date.now()}`,
+      id: newReport.audit_id || `upload-${Date.now()}`,
       name: formattedName.charAt(0).toUpperCase() + formattedName.slice(1),
-      category: 'Scanned Packaging',
+      category: 'Stored Specimen',
       timeAgo: 'Just now',
       grade: isA ? 'A+' : isB ? 'B-' : 'C',
-      gradeBg: isA ? 'bg-[#D5FF3F]' : isB ? 'bg-[#8B5CF6]' : 'bg-[#FF2A85]',
-      gradeColor: isA ? 'text-zinc-950 font-black' : 'text-white font-black',
-      icon: Camera,
-      iconBg: 'bg-[#D5FF3F]/30 text-zinc-900',
+      gradeBg: isA
+        ? 'bg-emerald-500/15 border border-emerald-500/30 shadow-sm shadow-emerald-500/10'
+        : isB
+        ? 'bg-amber-500/15 border border-amber-500/30 shadow-sm shadow-amber-500/10'
+        : 'bg-rose-500/15 border border-rose-500/30 shadow-sm shadow-rose-500/10',
+      gradeColor: isA
+        ? 'text-emerald-400 font-black font-mono'
+        : isB
+        ? 'text-amber-400 font-black font-mono'
+        : 'text-rose-400 font-black font-mono',
+      icon: ImageIcon,
+      iconBg: 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20',
       presetId: 'custom-upload',
+      image_url: newReport.image_url,
+      is_database_record: true,
       report: newReport,
     };
 
-    setRecentItems((prev) => [newItem, ...prev]);
+    setRecentItems((prev) => [newItem, ...prev.filter((i) => i.id !== newItem.id)]);
     setIsDrawerOpen(true);
   };
 
   return (
-    <div className="min-h-screen bg-[#F0EDE3] flex flex-col items-center justify-start text-zinc-900 selection:bg-[#FF2A85]/20 selection:text-[#FF2A85] relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#0B0F17] flex flex-col items-center justify-start text-slate-100 selection:bg-cyan-500/20 selection:text-cyan-300 relative overflow-x-hidden font-sans">
       
-      {/* Background Organic Pastel Blobs */}
-      <div className="fixed -top-16 -right-16 w-96 h-96 rounded-full bg-[#E5F792] opacity-75 blur-3xl pointer-events-none -z-0" />
-      <div className="fixed top-1/3 -left-20 w-72 h-80 rounded-full bg-[#FFD1DC] opacity-70 blur-3xl pointer-events-none -z-0" />
-      <div className="fixed bottom-10 right-1/4 w-80 h-80 rounded-full bg-[#E0F7FA] opacity-50 blur-3xl pointer-events-none -z-0" />
+      {/* Background Ambient Cyber Glows */}
+      <div className="fixed -top-24 -right-24 w-[500px] h-[500px] rounded-full bg-cyan-600/10 blur-[120px] pointer-events-none -z-0" />
+      <div className="fixed top-1/3 -left-32 w-[450px] h-[450px] rounded-full bg-indigo-600/10 blur-[140px] pointer-events-none -z-0" />
+      <div className="fixed bottom-10 right-1/4 w-[400px] h-[400px] rounded-full bg-emerald-600/10 blur-[130px] pointer-events-none -z-0" />
+
+      {/* Subtle Tactical Tech Gridlines Overlay */}
+      <div 
+        className="fixed inset-0 pointer-events-none opacity-[0.03] -z-0" 
+        style={{
+          backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)',
+          backgroundSize: '32px 32px'
+        }}
+      />
 
       {/* Responsive Main Container */}
       <div
         className={`w-full transition-all duration-300 relative z-10 ${
           isMobileFrameMode
-            ? 'max-w-[430px] my-0 sm:my-6 bg-[#F7F5EC] sm:rounded-[44px] sm:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.2)] border-x sm:border border-zinc-300/80 px-4 sm:px-5 min-h-screen pb-24 overflow-hidden'
+            ? 'max-w-[430px] my-0 sm:my-6 bg-[#0E1524] sm:rounded-[44px] sm:shadow-[0_25px_70px_-15px_rgba(0,0,0,0.9)] border-x sm:border border-slate-800/80 px-4 sm:px-5 min-h-screen pb-24 overflow-hidden ring-1 ring-slate-700/40'
             : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-6 min-h-screen pb-24 lg:pb-12'
         }`}
       >
@@ -215,6 +301,7 @@ export function App() {
                       items={recentItems}
                       onSelectItem={handleSelectItem}
                       onSeeAll={() => setActiveTab('category')}
+                      onDeleteItem={handleDeleteItem}
                     />
                   </div>
                 </div>
@@ -246,6 +333,7 @@ export function App() {
                   items={recentItems}
                   onSelectItem={handleSelectItem}
                   onSeeAll={() => setActiveTab('category')}
+                  onDeleteItem={handleDeleteItem}
                 />
               </div>
             )}
@@ -275,17 +363,12 @@ export function App() {
 
         {/* Tab 5: Government Gazette & Statutory Guarantee View */}
         {activeTab === 'gazette' && (
-          <div className="max-w-5xl mx-auto">
-            <GovernmentGazetteView
-              onBackToHome={() => setActiveTab('home')}
-              onOpenNotice={() => setIsNoticeOpen(true)}
-            />
+          <div className="max-w-4xl mx-auto">
+            <GovernmentGazetteView />
           </div>
         )}
-      </div>
 
-      {/* Floating Bottom Navigation Dock (Visible on Mobile & Tablet, and in Mobile Frame) */}
-      <div className={!isMobileFrameMode ? 'lg:hidden' : 'block'}>
+        {/* Floating Mobile Bottom Navigation Dock */}
         <BottomNav
           activeTab={activeTab}
           onSelectTab={setActiveTab}
