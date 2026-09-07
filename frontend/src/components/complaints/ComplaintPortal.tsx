@@ -2,10 +2,9 @@ import React, { useState } from 'react';
 import {
   X, AlertTriangle, Flag, MapPin, User, Phone, Mail,
   CheckCircle2, Loader2, ExternalLink, ChevronRight,
-  ChevronLeft, Shield, Building2, ClipboardList, Info, Zap
+  ChevronLeft, Shield, Building2, ClipboardList, Info
 } from 'lucide-react';
 import { AuditReport } from '../../types/compliance';
-import { PortalRoutingPreview } from './PortalRoutingPreview';
 
 interface ComplaintPortalProps {
   isOpen: boolean;
@@ -33,6 +32,7 @@ export const ComplaintPortal: React.FC<ComplaintPortalProps> = ({ isOpen, onClos
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<any>(null);
 
+  // Step 1 — Violation details (auto-filled)
   const [selectedViolations, setSelectedViolations] = useState<string[]>(
     report?.violations?.map((v) => v.mandate_id) ?? []
   );
@@ -40,6 +40,7 @@ export const ComplaintPortal: React.FC<ComplaintPortalProps> = ({ isOpen, onClos
   const [purchaseDate, setPurchaseDate] = useState('');
   const [description, setDescription] = useState('');
 
+  // Step 2 — Consumer info
   const [consumerName, setConsumerName] = useState('');
   const [consumerEmail, setConsumerEmail] = useState('');
   const [consumerPhone, setConsumerPhone] = useState('');
@@ -114,104 +115,84 @@ export const ComplaintPortal: React.FC<ComplaintPortalProps> = ({ isOpen, onClos
   const stepOrder: Step[] = ['violations', 'consumer', 'review', 'success'];
   const stepIndex = stepOrder.indexOf(step);
 
-  const inputClass = "w-full bg-[#161F30] border border-slate-700 text-slate-100 placeholder:text-slate-500 rounded-xl px-3 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-500/50 transition-all";
-  const selectClass = "w-full bg-[#161F30] border border-slate-700 text-slate-100 rounded-xl px-3 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-500/50 transition-all";
-  const labelClass = "block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase tracking-wider";
-
   return (
-    <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm">
-      <div className="w-full max-w-lg bg-[#111827] rounded-t-3xl sm:rounded-3xl shadow-[0_25px_80px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col max-h-[92vh] border border-slate-800">
-
-        {/* ── Header ── */}
-        <div className="bg-[#0B0F17] px-5 pt-5 pb-4 flex items-start justify-between shrink-0 border-b border-slate-800">
+    <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+        {/* Header */}
+        <div className="bg-[#0E1118] px-5 pt-5 pb-4 flex items-start justify-between shrink-0">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <Flag className="w-4 h-4 text-rose-500" />
-              <span className="text-rose-400 text-[10px] font-mono font-bold uppercase tracking-widest">
-                File Complaint — Legal Metrology
-              </span>
+              <Flag className="w-4 h-4 text-[#FF2A85]" />
+              <span className="text-[#FF2A85] text-xs font-black uppercase tracking-widest">File Complaint</span>
             </div>
             <h2 className="text-white font-black text-base leading-tight">
               Ministry of Consumer Affairs
             </h2>
-            <p className="text-slate-400 text-xs font-mono mt-0.5">
-              FairPack — Statutory Consumer Grievance Portal
-            </p>
+            <p className="text-slate-400 text-xs mt-0.5">NutriScan — Consumer Grievance Portal</p>
           </div>
-          <button
-            onClick={onClose}
-            className="text-slate-500 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10"
-          >
+          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* ── Step Progress Bar ── */}
+        {/* Step Progress Bar */}
         {step !== 'success' && (
-          <div className="bg-[#0B0F17] px-5 pb-4 shrink-0">
+          <div className="bg-[#0E1118] px-5 pb-4 shrink-0">
             <div className="flex items-center gap-2">
-              {(['violations', 'consumer', 'review'] as Step[]).map((s, i) => (
+              {['violations', 'consumer', 'review'].map((s, i) => (
                 <React.Fragment key={s}>
-                  <div className={`flex items-center gap-1.5 ${stepIndex >= i ? 'text-slate-100' : 'text-slate-600'}`}>
+                  <div className={`flex items-center gap-1.5 ${stepIndex >= i ? 'text-white' : 'text-slate-600'}`}>
                     <div className={`w-5 h-5 rounded-full text-[10px] font-black flex items-center justify-center transition-all ${
-                      stepIndex > i
-                        ? 'bg-emerald-500 text-white'
-                        : stepIndex === i
-                        ? 'bg-cyan-500 text-white shadow-[0_0_10px_rgba(6,182,212,0.5)]'
-                        : 'bg-slate-800 text-slate-500'
-                    }`}>
-                      {stepIndex > i ? '✓' : i + 1}
-                    </div>
-                    <span className="text-[10px] font-mono hidden sm:block">{stepLabels[s]}</span>
+                      stepIndex > i ? 'bg-[#D5FF3F] text-zinc-900' :
+                      stepIndex === i ? 'bg-[#FF2A85] text-white' :
+                      'bg-slate-800 text-slate-500'
+                    }`}>{stepIndex > i ? '✓' : i + 1}</div>
+                    <span className="text-[10px] font-semibold hidden sm:block">{stepLabels[s as Step]}</span>
                   </div>
-                  {i < 2 && (
-                    <div className={`flex-1 h-px transition-colors ${stepIndex > i ? 'bg-emerald-500/40' : 'bg-slate-800'}`} />
-                  )}
+                  {i < 2 && <div className={`flex-1 h-px ${stepIndex > i ? 'bg-[#D5FF3F]/60' : 'bg-slate-800'}`} />}
                 </React.Fragment>
               ))}
             </div>
           </div>
         )}
 
-        {/* ── Product Context Bar ── */}
+        {/* Product Context Bar */}
         {step !== 'success' && (
-          <div className="bg-[#161F30] border-b border-slate-800 px-5 py-3 flex items-center gap-3 shrink-0">
-            <div className="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
-              <AlertTriangle className="w-4 h-4 text-rose-400" />
+          <div className="bg-slate-50 border-b border-zinc-200 px-5 py-3 flex items-center gap-3 shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-[#FF2A85]/10 flex items-center justify-center">
+              <AlertTriangle className="w-4 h-4 text-[#FF2A85]" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-slate-100 truncate font-mono">{report.product_name}</p>
-              <p className="text-[10px] font-mono text-slate-500">
-                Audit: {report.audit_id} · Score: {report.compliance_score}%
+              <p className="text-xs font-black text-zinc-800 truncate">{report.product_name}</p>
+              <p className="text-[10px] text-zinc-500">
+                Audit ID: {report.audit_id} · Score: {report.compliance_score}%
               </p>
             </div>
-            <span className={`px-2 py-0.5 rounded-full text-[9px] font-black font-mono uppercase tracking-wide shrink-0 ${
-              (report.violations?.length ?? 0) > 0
-                ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
-                : 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+            <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wide shrink-0 ${
+              report.violations?.length > 0 ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
             }`}>
               {report.violations?.length ?? 0} Violations
             </span>
           </div>
         )}
 
-        {/* ── Scrollable Body ── */}
+        {/* Scrollable Body */}
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
 
           {/* ── STEP 1: Violations ── */}
           {step === 'violations' && (
             <div className="space-y-4">
               <div>
-                <h3 className="font-black text-sm text-slate-100 mb-0.5">Select Violations to Report</h3>
-                <p className="text-xs font-mono text-slate-500">
-                  Auto-detected from your audit. Tap to select / deselect.
+                <h3 className="font-black text-sm text-zinc-900 mb-1">Select Violations to Report</h3>
+                <p className="text-xs text-zinc-500">
+                  These are auto-detected from your scan. Tap to select/deselect.
                 </p>
               </div>
 
               <div className="space-y-2">
                 {allIssues.length === 0 ? (
-                  <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm font-mono text-center">
-                    ✓ No violations detected. You can still file a complaint with a description below.
+                  <div className="p-4 rounded-xl bg-green-50 border border-green-200 text-green-700 text-sm font-semibold text-center">
+                    ✅ No violations found in audit. You can still file a complaint with a description.
                   </div>
                 ) : (
                   allIssues.map((item) => {
@@ -224,32 +205,30 @@ export const ComplaintPortal: React.FC<ComplaintPortalProps> = ({ isOpen, onClos
                         className={`w-full text-left p-3 rounded-xl border-2 transition-all ${
                           isSelected
                             ? isViolation
-                              ? 'border-rose-500/60 bg-rose-500/10'
-                              : 'border-amber-500/60 bg-amber-500/10'
-                            : 'border-slate-700 bg-[#161F30] hover:border-slate-600'
+                              ? 'border-red-500 bg-red-50'
+                              : 'border-amber-400 bg-amber-50'
+                            : 'border-zinc-200 bg-white hover:border-zinc-300'
                         }`}
                       >
                         <div className="flex items-start gap-2.5">
                           <div className={`w-4 h-4 rounded shrink-0 mt-0.5 border-2 flex items-center justify-center transition-all ${
                             isSelected
-                              ? isViolation ? 'bg-rose-500 border-rose-500' : 'bg-amber-500 border-amber-500'
-                              : 'border-slate-600 bg-transparent'
+                              ? isViolation ? 'bg-red-500 border-red-500' : 'bg-amber-400 border-amber-400'
+                              : 'border-zinc-300 bg-white'
                           }`}>
                             {isSelected && <span className="text-white text-[9px] font-black">✓</span>}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="text-xs font-bold text-slate-100">{item.name}</span>
-                              <span className={`px-1.5 py-0 rounded text-[9px] font-black font-mono ${
-                                isViolation
-                                  ? 'bg-rose-500/20 text-rose-400'
-                                  : 'bg-amber-500/20 text-amber-400'
+                              <span className="text-xs font-black text-zinc-800">{item.name}</span>
+                              <span className={`px-1.5 py-0 rounded text-[9px] font-black ${
+                                isViolation ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
                               }`}>
                                 {isViolation ? 'VIOLATION' : 'WARNING'}
                               </span>
                             </div>
-                            <p className="text-[10px] font-mono text-slate-500 mt-0.5">{item.rule}</p>
-                            <p className="text-[10px] text-slate-400 mt-1 leading-relaxed line-clamp-2">{item.reason}</p>
+                            <p className="text-[10px] text-zinc-500 mt-0.5">{item.rule}</p>
+                            <p className="text-[10px] text-zinc-600 mt-1 leading-relaxed line-clamp-2">{item.reason}</p>
                           </div>
                         </div>
                       </button>
@@ -259,41 +238,41 @@ export const ComplaintPortal: React.FC<ComplaintPortalProps> = ({ isOpen, onClos
               </div>
 
               {/* Purchase Details */}
-              <div className="space-y-3 pt-2 border-t border-slate-800">
-                <h3 className="font-black text-sm text-slate-100">Purchase Details</h3>
+              <div className="space-y-3 pt-2 border-t border-zinc-100">
+                <h3 className="font-black text-sm text-zinc-900">Purchase Details</h3>
                 <div>
-                  <label className={labelClass}>
-                    Purchase Location <span className="text-rose-500">*</span>
+                  <label className="block text-xs font-bold text-zinc-700 mb-1">
+                    Where did you buy this product? <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={purchaseLocation}
                     onChange={(e) => setPurchaseLocation(e.target.value)}
                     placeholder="e.g., DMart, Sector 18, Noida, UP"
-                    className={inputClass}
+                    className="w-full border border-zinc-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF2A85]/30 focus:border-[#FF2A85] transition-all"
                   />
                 </div>
                 <div>
-                  <label className={labelClass}>Purchase Date (optional)</label>
+                  <label className="block text-xs font-bold text-zinc-700 mb-1">Purchase Date (optional)</label>
                   <input
                     type="date"
                     value={purchaseDate}
                     onChange={(e) => setPurchaseDate(e.target.value)}
-                    className={inputClass}
+                    className="w-full border border-zinc-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF2A85]/30 focus:border-[#FF2A85] transition-all"
                   />
                 </div>
                 <div>
-                  <label className={labelClass}>
-                    Describe the Violation <span className="text-rose-500">*</span>
+                  <label className="block text-xs font-bold text-zinc-700 mb-1">
+                    Describe the Issue <span className="text-red-500">*</span>
                   </label>
                   <textarea
                     rows={3}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Describe what's wrong with the product packaging..."
-                    className={`${inputClass} resize-none`}
+                    placeholder="Briefly describe what's wrong with the product packaging..."
+                    className="w-full border border-zinc-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF2A85]/30 focus:border-[#FF2A85] transition-all resize-none"
                   />
-                  <p className="text-[10px] font-mono text-slate-500 mt-1">{description.length}/2000 chars (min 10)</p>
+                  <p className="text-[10px] text-zinc-400 mt-1">{description.length}/2000 chars (min 10)</p>
                 </div>
               </div>
             </div>
@@ -303,28 +282,28 @@ export const ComplaintPortal: React.FC<ComplaintPortalProps> = ({ isOpen, onClos
           {step === 'consumer' && (
             <div className="space-y-4">
               <div>
-                <h3 className="font-black text-sm text-slate-100 mb-0.5">Your Information</h3>
-                <p className="text-xs font-mono text-slate-500">
-                  Required for the Legal Metrology department to contact you. Email/phone are kept confidential.
+                <h3 className="font-black text-sm text-zinc-900 mb-1">Your Information</h3>
+                <p className="text-xs text-zinc-500">
+                  Required for the Legal Metrology department to contact you. Your email/phone are kept confidential.
                 </p>
               </div>
 
               <div className="space-y-3">
                 <div>
-                  <label className={labelClass}>
+                  <label className="block text-xs font-bold text-zinc-700 mb-1">
                     <User className="w-3 h-3 inline mr-1" />
-                    Full Name <span className="text-rose-500">*</span>
+                    Full Name <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={consumerName}
                     onChange={(e) => setConsumerName(e.target.value)}
-                    placeholder="Your full name"
-                    className={inputClass}
+                    placeholder="Your name"
+                    className="w-full border border-zinc-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF2A85]/30 focus:border-[#FF2A85] transition-all"
                   />
                 </div>
                 <div>
-                  <label className={labelClass}>
+                  <label className="block text-xs font-bold text-zinc-700 mb-1">
                     <Mail className="w-3 h-3 inline mr-1" />
                     Email Address (optional)
                   </label>
@@ -333,11 +312,11 @@ export const ComplaintPortal: React.FC<ComplaintPortalProps> = ({ isOpen, onClos
                     value={consumerEmail}
                     onChange={(e) => setConsumerEmail(e.target.value)}
                     placeholder="you@email.com"
-                    className={inputClass}
+                    className="w-full border border-zinc-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF2A85]/30 focus:border-[#FF2A85] transition-all"
                   />
                 </div>
                 <div>
-                  <label className={labelClass}>
+                  <label className="block text-xs font-bold text-zinc-700 mb-1">
                     <Phone className="w-3 h-3 inline mr-1" />
                     Mobile Number (optional)
                   </label>
@@ -347,47 +326,52 @@ export const ComplaintPortal: React.FC<ComplaintPortalProps> = ({ isOpen, onClos
                     onChange={(e) => setConsumerPhone(e.target.value)}
                     placeholder="10-digit mobile number"
                     maxLength={10}
-                    className={inputClass}
+                    className="w-full border border-zinc-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF2A85]/30 focus:border-[#FF2A85] transition-all"
                   />
                 </div>
                 <div>
-                  <label className={labelClass}>
+                  <label className="block text-xs font-bold text-zinc-700 mb-1">
                     <MapPin className="w-3 h-3 inline mr-1" />
-                    State / UT <span className="text-rose-500">*</span>
+                    State / UT <span className="text-red-500">*</span>
                   </label>
                   <select
                     value={consumerState}
                     onChange={(e) => setConsumerState(e.target.value)}
-                    className={selectClass}
+                    className="w-full border border-zinc-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF2A85]/30 focus:border-[#FF2A85] transition-all bg-white"
                   >
-                    <option value="">Select your state / UT</option>
+                    <option value="">Select your state</option>
                     {INDIAN_STATES.map((s) => (
                       <option key={s} value={s}>{s}</option>
                     ))}
                   </select>
+                  {consumerState && (
+                    <p className="text-[10px] text-blue-600 mt-1 flex items-center gap-1">
+                      <Building2 className="w-2.5 h-2.5" />
+                      Will be routed to the {consumerState} Legal Metrology Department
+                    </p>
+                  )}
                 </div>
                 <div>
-                  <label className={labelClass}>District (optional)</label>
+                  <label className="block text-xs font-bold text-zinc-700 mb-1">
+                    District (optional)
+                  </label>
                   <input
                     type="text"
                     value={consumerDistrict}
                     onChange={(e) => setConsumerDistrict(e.target.value)}
                     placeholder="Your district"
-                    className={inputClass}
+                    className="w-full border border-zinc-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF2A85]/30 focus:border-[#FF2A85] transition-all"
                   />
                 </div>
               </div>
 
-              {/* Live portal routing preview */}
-              <PortalRoutingPreview state={consumerState} />
-
-              {/* Privacy notice */}
-              <div className="bg-indigo-500/10 border border-indigo-500/25 rounded-xl p-3 flex items-start gap-2">
-                <Info className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
+              {/* Info card */}
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-start gap-2">
+                <Info className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-xs font-bold text-indigo-300">Privacy Notice</p>
-                  <p className="text-[10px] font-mono text-indigo-400/70 mt-0.5 leading-relaxed">
-                    Your personal details are shared only with the competent Legal Metrology authority
+                  <p className="text-xs font-bold text-blue-800">Privacy Notice</p>
+                  <p className="text-[10px] text-blue-600 mt-0.5 leading-relaxed">
+                    Your personal details are shared only with the competent Legal Metrology authority in your state/UT 
                     under the Legal Metrology Act, 2009. They will not be published publicly.
                   </p>
                 </div>
@@ -399,124 +383,135 @@ export const ComplaintPortal: React.FC<ComplaintPortalProps> = ({ isOpen, onClos
           {step === 'review' && (
             <div className="space-y-4">
               <div>
-                <h3 className="font-black text-sm text-slate-100 mb-0.5">Review Your Complaint</h3>
-                <p className="text-xs font-mono text-slate-500">Please verify all details before submitting.</p>
+                <h3 className="font-black text-sm text-zinc-900 mb-1">Review Your Complaint</h3>
+                <p className="text-xs text-zinc-500">Please verify all details before submitting.</p>
               </div>
 
               {/* Product */}
-              <div className="bg-[#161F30] border border-slate-800 rounded-xl p-4 space-y-1.5">
-                <p className="text-[10px] font-mono font-black uppercase tracking-wider text-slate-500">Product</p>
-                <p className="text-sm font-black text-slate-100">{report.product_name}</p>
-                <p className="text-xs font-mono text-slate-500">
-                  Audit: {report.audit_id} · Compliance Score: {report.compliance_score}%
-                </p>
+              <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 space-y-2">
+                <p className="text-[10px] font-black uppercase tracking-wider text-zinc-400">Product</p>
+                <p className="text-sm font-black text-zinc-900">{report.product_name}</p>
+                <p className="text-xs text-zinc-500">Audit: {report.audit_id} · Compliance Score: {report.compliance_score}%</p>
               </div>
 
               {/* Selected Violations */}
-              <div className="bg-rose-500/10 border border-rose-500/25 rounded-xl p-4 space-y-2">
-                <p className="text-[10px] font-mono font-black uppercase tracking-wider text-rose-400 flex items-center gap-1">
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4 space-y-2">
+                <p className="text-[10px] font-black uppercase tracking-wider text-red-400 flex items-center gap-1">
                   <Flag className="w-3 h-3" /> Selected Violations ({selectedViolations.length})
                 </p>
                 {selectedViolationObjs.map((v) => (
                   <div key={v.mandate_id} className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
-                    <span className="text-xs font-mono text-slate-300">{v.name} ({v.rule})</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
+                    <span className="text-xs text-zinc-800">{v.name} ({v.rule})</span>
                   </div>
                 ))}
               </div>
 
               {/* Purchase details */}
-              <div className="bg-[#161F30] border border-slate-800 rounded-xl p-4 space-y-1.5">
-                <p className="text-[10px] font-mono font-black uppercase tracking-wider text-slate-500">Purchase Details</p>
-                <p className="text-xs font-mono text-slate-300">
-                  <span className="text-slate-500">Location:</span> {purchaseLocation}
-                </p>
-                {purchaseDate && (
-                  <p className="text-xs font-mono text-slate-300">
-                    <span className="text-slate-500">Date:</span> {purchaseDate}
-                  </p>
-                )}
-                <p className="text-xs font-mono text-slate-300">
-                  <span className="text-slate-500">Description:</span> {description}
-                </p>
+              <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 space-y-1.5">
+                <p className="text-[10px] font-black uppercase tracking-wider text-zinc-400">Purchase Details</p>
+                <p className="text-xs"><span className="font-semibold">Location:</span> {purchaseLocation}</p>
+                {purchaseDate && <p className="text-xs"><span className="font-semibold">Date:</span> {purchaseDate}</p>}
+                <p className="text-xs"><span className="font-semibold">Description:</span> {description}</p>
               </div>
 
               {/* Consumer */}
-              <div className="bg-[#161F30] border border-slate-800 rounded-xl p-4 space-y-1.5">
-                <p className="text-[10px] font-mono font-black uppercase tracking-wider text-slate-500">Consumer Details</p>
-                <p className="text-xs font-mono font-bold text-slate-100">{consumerName}</p>
-                {consumerEmail && <p className="text-xs font-mono text-slate-400">{consumerEmail}</p>}
-                {consumerPhone && <p className="text-xs font-mono text-slate-400">{consumerPhone}</p>}
-                <p className="text-xs font-mono text-slate-400">
-                  {consumerState}{consumerDistrict ? `, ${consumerDistrict}` : ''}
-                </p>
+              <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 space-y-1.5">
+                <p className="text-[10px] font-black uppercase tracking-wider text-zinc-400">Consumer Details</p>
+                <p className="text-xs font-semibold">{consumerName}</p>
+                {consumerEmail && <p className="text-xs text-zinc-600">{consumerEmail}</p>}
+                {consumerPhone && <p className="text-xs text-zinc-600">{consumerPhone}</p>}
+                <p className="text-xs text-zinc-600">{consumerState}{consumerDistrict ? `, ${consumerDistrict}` : ''}</p>
               </div>
 
-              {/* Full routing preview */}
-              <PortalRoutingPreview state={consumerState} />
+              {/* Routing */}
+              <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-3 flex items-start gap-2">
+                <Building2 className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-bold text-indigo-800">Auto-Routing to State Department</p>
+                  <p className="text-[10px] text-indigo-600 mt-0.5">
+                    This complaint will be automatically routed to the <strong>{consumerState}</strong> Legal Metrology Department for enforcement action.
+                  </p>
+                </div>
+              </div>
+
+              {/* INGRAM Notice */}
+              <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 flex items-start gap-2">
+                <Shield className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-bold text-orange-800">INGRAM Integration</p>
+                  <p className="text-[10px] text-orange-600 mt-0.5">
+                    Officers can forward your complaint to India's National Consumer Helpline (NCH) at 
+                    <strong> consumerhelpline.gov.in</strong> for escalation.
+                  </p>
+                </div>
+              </div>
             </div>
           )}
 
           {/* ── STEP: Success ── */}
           {step === 'success' && result && (
             <div className="space-y-5 text-center py-4">
-              <div className="w-16 h-16 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mx-auto shadow-[0_0_30px_rgba(16,185,129,0.2)]">
-                <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+              <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto">
+                <CheckCircle2 className="w-8 h-8 text-green-500" />
               </div>
               <div>
-                <h3 className="font-black text-lg text-slate-100">Complaint Registered!</h3>
-                <p className="text-sm font-mono text-slate-400 mt-1">Your reference number:</p>
-                <div className="mt-3 inline-block bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-black text-xl px-6 py-3 rounded-2xl tracking-widest font-mono shadow-[0_0_20px_rgba(16,185,129,0.15)]">
+                <h3 className="font-black text-lg text-zinc-900">Complaint Submitted!</h3>
+                <p className="text-sm text-zinc-500 mt-1">Your reference number is:</p>
+                <div className="mt-2 inline-block bg-[#0E1118] text-[#D5FF3F] font-black text-xl px-6 py-3 rounded-2xl tracking-widest">
                   {result.ref_number}
                 </div>
-                <p className="text-xs font-mono text-slate-500 mt-2">Save this number to track your complaint</p>
+                <p className="text-xs text-zinc-400 mt-2">Save this number to track your complaint</p>
               </div>
 
               {/* Routing info */}
-              <div className="bg-indigo-500/10 border border-indigo-500/25 rounded-xl p-4 text-left space-y-2">
-                <p className="text-xs font-mono font-black text-indigo-300 flex items-center gap-1">
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-left space-y-2">
+                <p className="text-xs font-black text-blue-800 flex items-center gap-1">
                   <Building2 className="w-3.5 h-3.5" /> Routed To
                 </p>
-                <p className="text-sm font-bold text-slate-100">{result.routed_to?.department}</p>
-                <p className="text-xs font-mono text-slate-400">📧 {result.routed_to?.email}</p>
-                <p className="text-xs font-mono text-slate-400">📞 {result.routed_to?.phone}</p>
+                <p className="text-sm font-bold text-zinc-800">{result.routed_to?.department}</p>
+                <p className="text-xs text-zinc-600">📧 {result.routed_to?.email}</p>
+                <p className="text-xs text-zinc-600">📞 {result.routed_to?.phone}</p>
               </div>
 
-              {/* INGRAM info */}
-              <div className="bg-amber-500/10 border border-amber-500/25 rounded-xl p-4 text-left space-y-2">
-                <p className="text-xs font-mono font-black text-amber-300">National Consumer Helpline — INGRAM</p>
+              {/* INGRAM / NCH info */}
+              <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 text-left space-y-2">
+                <p className="text-xs font-black text-orange-800">National Consumer Helpline</p>
                 <div className="flex items-center gap-2">
                   <span className="text-xl">📞</span>
                   <div>
-                    <p className="text-sm font-black text-slate-100 font-mono">1800-11-4000</p>
-                    <p className="text-[10px] font-mono text-slate-500">Toll-free · Mon–Sat 9 AM – 5 PM</p>
+                    <p className="text-sm font-black text-zinc-900">1800-11-4000</p>
+                    <p className="text-[10px] text-zinc-500">Toll-free · Mon–Sat 9 AM – 5 PM</p>
                   </div>
                 </div>
                 <a
                   href="https://consumerhelpline.gov.in"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-xs font-mono font-semibold text-amber-400 hover:text-amber-300 transition-colors"
+                  className="flex items-center gap-1.5 text-xs font-semibold text-orange-600 hover:text-orange-800 transition-colors"
                 >
                   <ExternalLink className="w-3 h-3" />
                   consumerhelpline.gov.in (INGRAM)
                 </a>
               </div>
 
+              {/* Track button */}
               <div className="space-y-2">
                 <button
                   onClick={() => {
                     onClose();
-                    window.open(`/api/complaints/track/${result.ref_number}`, '_blank');
+                    // Open tracker
+                    const url = `/api/complaints/track/${result.ref_number}`;
+                    window.open(url, '_blank');
                   }}
-                  className="w-full bg-[#161F30] hover:bg-[#1e2d44] border border-slate-700 text-slate-100 font-black py-3 rounded-2xl text-sm flex items-center justify-center gap-2 transition-colors"
+                  className="w-full bg-[#0E1118] text-white font-black py-3 rounded-2xl text-sm flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors"
                 >
-                  <ClipboardList className="w-4 h-4 text-cyan-400" />
+                  <ClipboardList className="w-4 h-4" />
                   Track Complaint Status
                 </button>
                 <button
                   onClick={onClose}
-                  className="w-full text-slate-500 font-mono font-semibold py-2 text-sm hover:text-slate-300 transition-colors"
+                  className="w-full text-zinc-500 font-semibold py-2 text-sm hover:text-zinc-800 transition-colors"
                 >
                   Close
                 </button>
@@ -525,16 +520,16 @@ export const ComplaintPortal: React.FC<ComplaintPortalProps> = ({ isOpen, onClos
           )}
         </div>
 
-        {/* ── Footer Navigation ── */}
+        {/* Footer Navigation */}
         {step !== 'success' && (
-          <div className="border-t border-slate-800 px-5 py-4 flex items-center justify-between gap-3 shrink-0 bg-[#0B0F17]">
+          <div className="border-t border-zinc-100 px-5 py-4 flex items-center justify-between gap-3 shrink-0 bg-white">
             {step !== 'violations' ? (
               <button
                 onClick={() => {
                   const idx = stepOrder.indexOf(step);
                   if (idx > 0) setStep(stepOrder[idx - 1]);
                 }}
-                className="flex items-center gap-1.5 text-slate-400 font-mono font-semibold text-sm hover:text-slate-100 transition-colors"
+                className="flex items-center gap-1.5 text-zinc-600 font-semibold text-sm hover:text-zinc-900 transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
                 Back
@@ -542,7 +537,7 @@ export const ComplaintPortal: React.FC<ComplaintPortalProps> = ({ isOpen, onClos
             ) : (
               <button
                 onClick={onClose}
-                className="text-slate-500 font-mono font-semibold text-sm hover:text-slate-300 transition-colors"
+                className="text-zinc-400 font-semibold text-sm hover:text-zinc-700 transition-colors"
               >
                 Cancel
               </button>
@@ -552,7 +547,7 @@ export const ComplaintPortal: React.FC<ComplaintPortalProps> = ({ isOpen, onClos
               <button
                 onClick={() => setStep('consumer')}
                 disabled={!canProceedStep1}
-                className="flex items-center gap-1.5 bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white font-black px-5 py-2.5 rounded-xl text-sm disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95 shadow-[0_0_15px_rgba(239,68,68,0.3)]"
+                className="flex items-center gap-1.5 bg-[#FF2A85] text-white font-black px-5 py-2.5 rounded-xl text-sm disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#e0246f] transition-colors active:scale-95"
               >
                 Next <ChevronRight className="w-4 h-4" />
               </button>
@@ -561,7 +556,7 @@ export const ComplaintPortal: React.FC<ComplaintPortalProps> = ({ isOpen, onClos
               <button
                 onClick={() => setStep('review')}
                 disabled={!canProceedStep2}
-                className="flex items-center gap-1.5 bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white font-black px-5 py-2.5 rounded-xl text-sm disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95 shadow-[0_0_15px_rgba(239,68,68,0.3)]"
+                className="flex items-center gap-1.5 bg-[#FF2A85] text-white font-black px-5 py-2.5 rounded-xl text-sm disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#e0246f] transition-colors active:scale-95"
               >
                 Review <ChevronRight className="w-4 h-4" />
               </button>
@@ -570,12 +565,12 @@ export const ComplaintPortal: React.FC<ComplaintPortalProps> = ({ isOpen, onClos
               <button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="flex items-center gap-1.5 bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white font-black px-5 py-2.5 rounded-xl text-sm disabled:opacity-60 transition-all active:scale-95 shadow-[0_0_15px_rgba(239,68,68,0.3)]"
+                className="flex items-center gap-1.5 bg-[#FF2A85] text-white font-black px-5 py-2.5 rounded-xl text-sm disabled:opacity-60 hover:bg-[#e0246f] transition-colors active:scale-95"
               >
                 {isSubmitting ? (
                   <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</>
                 ) : (
-                  <><Zap className="w-4 h-4" /> Submit Complaint</>
+                  <><Flag className="w-4 h-4" /> Submit Complaint</>
                 )}
               </button>
             )}

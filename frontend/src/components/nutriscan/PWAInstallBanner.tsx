@@ -55,18 +55,18 @@ export const PWAInstallBanner: React.FC = () => {
   }
 
   return (
-    <div className="mx-0 sm:mx-2 mb-3 bg-[#111827] text-white p-3 rounded-2xl border border-slate-800 shadow-xl flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+    <div className="mx-0 sm:mx-2 mb-3 bg-[#0E1118] text-white p-3 rounded-2xl border border-zinc-700/80 shadow-lg flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
       <div className="flex items-center gap-2.5 min-w-0">
-        <div className="w-8 h-8 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center shrink-0 font-black">
+        <div className="w-8 h-8 rounded-xl bg-[#D5FF3F] flex items-center justify-center text-zinc-950 shrink-0 font-black">
           <Smartphone className="w-4 h-4" />
         </div>
         <div className="min-w-0">
           <p className="text-xs font-black text-white flex items-center gap-1.5 truncate">
-            <span>Install FairPack Inspector</span>
-            <span className="bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[9px] px-1.5 py-0.2 rounded-full font-mono font-bold">PWA</span>
+            <span>Install NutriScan App</span>
+            <span className="bg-[#FF2A85] text-white text-[9px] px-1.5 py-0.2 rounded-full font-bold">PWA</span>
           </p>
-          <p className="text-[10px] font-mono text-slate-400 truncate">
-            Ultra-fast mobile auditor with instant camera optical scanner
+          <p className="text-[10px] text-zinc-400 truncate">
+            Fast, full-screen mobile experience with 1-tap label scanning
           </p>
         </div>
       </div>
@@ -74,14 +74,14 @@ export const PWAInstallBanner: React.FC = () => {
       <div className="flex items-center gap-1.5 shrink-0">
         <button
           onClick={handleInstall}
-          className="bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-950 text-[11px] font-black px-3 py-1.5 rounded-xl shadow-sm active:scale-95 transition-all flex items-center gap-1"
+          className="bg-[#D5FF3F] hover:bg-[#c9f635] text-zinc-950 text-[11px] font-black px-3 py-1.5 rounded-xl shadow-sm active:scale-95 transition-all flex items-center gap-1"
         >
           <Download className="w-3 h-3 stroke-[2.5]" />
           <span>Install</span>
         </button>
         <button
           onClick={() => setIsVisible(false)}
-          className="text-slate-400 hover:text-white p-1"
+          className="text-zinc-400 hover:text-white p-1"
           aria-label="Dismiss"
         >
           <X className="w-4 h-4" />

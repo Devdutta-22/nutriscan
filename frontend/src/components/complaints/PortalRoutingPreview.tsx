@@ -1,7 +1,7 @@
 import React from 'react';
 import { Building2, ArrowRight, Shield, Phone, Mail, ExternalLink, CheckCircle2 } from 'lucide-react';
 
-const STATE_DEPT_MAP: Record<string, { dept: string; email: string; phone: string }> = {
+export const STATE_DEPT_MAP: Record<string, { dept: string; email: string; phone: string }> = {
   'Andhra Pradesh':     { dept: 'AP Dept of Legal Metrology',          email: 'lm.ap@gov.in',      phone: '0866-2410800' },
   'Arunachal Pradesh':  { dept: 'AR Legal Metrology Dept',             email: 'lm.ar@gov.in',      phone: '0360-2244311' },
   'Assam':              { dept: 'Assam Legal Metrology',               email: 'lm.as@gov.in',      phone: '0361-2237318' },
@@ -40,126 +40,53 @@ const STATE_DEPT_MAP: Record<string, { dept: string; email: string; phone: strin
 
 interface PortalRoutingPreviewProps {
   state: string;
-  compact?: boolean;
 }
 
-export const PortalRoutingPreview: React.FC<PortalRoutingPreviewProps> = ({ state, compact = false }) => {
+export const PortalRoutingPreview: React.FC<PortalRoutingPreviewProps> = ({ state }) => {
   const dept = state ? STATE_DEPT_MAP[state] : null;
 
   if (!state) {
-    return (
-      <div className="rounded-2xl bg-[#161F30] border border-slate-700/60 p-4">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="w-2 h-2 rounded-full bg-slate-500" />
-          <span className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">Complaint Routing Preview</span>
-        </div>
-        <p className="text-slate-500 text-xs font-mono text-center py-2">
-          Select your State / UT above to see which government portal will receive your complaint.
-        </p>
-      </div>
-    );
+    return null;
   }
 
   return (
-    <div className="rounded-2xl bg-[#161F30] border border-indigo-500/30 overflow-hidden">
-      <div className="px-4 py-2.5 bg-indigo-500/10 border-b border-indigo-500/20 flex items-center gap-2">
-        <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
-        <span className="text-[10px] font-mono font-bold text-indigo-300 uppercase tracking-widest">
-          Auto-Routing Destination
-        </span>
-        <span className="ml-auto text-[10px] font-mono text-indigo-400 bg-indigo-500/15 px-2 py-0.5 rounded-full border border-indigo-500/25">
-          {state}
+    <div className="rounded-2xl bg-indigo-50/70 border border-indigo-200 overflow-hidden text-zinc-900 mt-2">
+      <div className="px-3.5 py-2 bg-indigo-100/80 border-b border-indigo-200 flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <Building2 className="w-3.5 h-3.5 text-indigo-700" />
+          <span className="text-[11px] font-bold text-indigo-900">
+            Auto-Routing: {state} Legal Metrology
+          </span>
+        </div>
+        <span className="text-[9px] font-mono font-bold bg-white text-indigo-700 px-2 py-0.5 rounded-full border border-indigo-200">
+          Act 2009
         </span>
       </div>
 
-      <div className="p-4 space-y-4">
-        {/* Routing flow visualization */}
-        <div className="flex items-center gap-1.5">
-          <div className="flex flex-col items-center gap-1 shrink-0">
-            <div className="w-9 h-9 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-lg">
-              📱
-            </div>
-            <span className="font-mono text-[9px] text-cyan-400 whitespace-nowrap">FairPack</span>
-          </div>
-
-          <div className="flex-1 flex flex-col items-center gap-0">
-            <div className="w-full h-px bg-gradient-to-r from-cyan-500/60 to-indigo-500/60" />
-            <ArrowRight className="w-3 h-3 text-indigo-400 -mt-1.5" />
-          </div>
-
-          <div className="flex flex-col items-center gap-1 shrink-0">
-            <div className="w-9 h-9 rounded-xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center">
-              <Building2 className="w-4 h-4 text-indigo-400" />
-            </div>
-            <span className="font-mono text-[9px] text-indigo-400 whitespace-nowrap">State Dept</span>
-          </div>
-
-          <ArrowRight className="w-3 h-3 text-slate-600 shrink-0" />
-
-          <div className="flex flex-col items-center gap-1 shrink-0">
-            <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center">
-              <Shield className="w-4 h-4 text-amber-400" />
-            </div>
-            <span className="font-mono text-[9px] text-amber-400 whitespace-nowrap">INGRAM</span>
-          </div>
-        </div>
-
-        {/* State dept details */}
+      <div className="p-3 space-y-2 text-xs">
         {dept && (
-          <div className="bg-[#0B0F17] rounded-xl border border-slate-800 p-3 space-y-2">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <p className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">Primary Destination</p>
-                <p className="text-sm font-extrabold text-white mt-0.5 leading-snug truncate">{dept.dept}</p>
-              </div>
-              <span className="shrink-0 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-[9px] font-mono font-bold uppercase">
-                Active
+          <div className="bg-white rounded-xl p-2.5 border border-indigo-100 space-y-1">
+            <p className="font-extrabold text-zinc-900 text-xs">{dept.dept}</p>
+            <div className="flex flex-wrap items-center gap-3 text-[11px] text-zinc-600">
+              <span className="flex items-center gap-1">
+                <Phone className="w-3 h-3 text-indigo-600" />
+                {dept.phone}
               </span>
-            </div>
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2 text-xs font-mono text-slate-300">
-                <Phone className="w-3 h-3 text-slate-500 shrink-0" />
-                <span>{dept.phone}</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs font-mono text-slate-300">
-                <Mail className="w-3 h-3 text-slate-500 shrink-0" />
-                <span>{dept.email}</span>
-              </div>
+              <span className="flex items-center gap-1">
+                <Mail className="w-3 h-3 text-indigo-600" />
+                {dept.email}
+              </span>
             </div>
           </div>
         )}
 
-        {/* INGRAM */}
-        <div className="bg-[#0B0F17] rounded-xl border border-amber-500/20 p-3">
-          <div className="flex items-center justify-between mb-1.5">
-            <p className="text-[10px] font-mono text-amber-400 uppercase tracking-wider font-bold">
-              Secondary Escalation — INGRAM/NCH
-            </p>
-            <a
-              href="https://consumerhelpline.gov.in"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1 text-[10px] text-amber-400 hover:text-amber-300"
-            >
-              <ExternalLink className="w-2.5 h-2.5" />
-            </a>
-          </div>
-          <div className="flex items-center gap-3">
-            <Phone className="w-3 h-3 text-amber-400 shrink-0" />
-            <span className="text-sm font-black text-white font-mono">1800-11-4000</span>
-            <span className="text-[10px] text-slate-500 font-mono">Toll-free</span>
-          </div>
-        </div>
-
-        <div className="flex items-start gap-2">
-          <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0 mt-0.5" />
-          <span className="text-[10px] font-mono text-slate-500">
-            Filed under <span className="text-emerald-400">Legal Metrology Act, 2009 §25</span>. Acknowledgment within 30 days.
+        <div className="flex items-center justify-between text-[11px] text-zinc-600 pt-0.5 px-1">
+          <span className="flex items-center gap-1 text-emerald-700 font-medium">
+            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+            Direct forward to State Controller &amp; INGRAM (NCH 1800-11-4000)
           </span>
         </div>
       </div>
     </div>
   );
 };
-
-export { STATE_DEPT_MAP };
