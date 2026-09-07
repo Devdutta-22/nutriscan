@@ -105,6 +105,7 @@ export interface AuditReport {
   audit_id: string;
   audit_timestamp: string;
   product_name: string;
+  product_category?: string;
   legal_status: string;
   status_text?: string;
   compliance_score: number;

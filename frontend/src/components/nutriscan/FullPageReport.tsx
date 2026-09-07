@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { 
-  ArrowLeft, FileText, CheckCircle2, AlertTriangle, XCircle, 
-  BarChart3, Scale, ShieldCheck, ShieldAlert, Award, Calculator, 
-  Printer, Image as ImageIcon, CheckSquare, BookOpen, RefreshCw,
-  Eye, AlertOctagon, HelpCircle, ExternalLink, Sparkles, Barcode as BarcodeIcon,
-  Shield, AlertCircle, ChevronDown, ChevronUp, Copy, Check, Flag,
-  Building2, Tag, Calendar, Globe, PhoneCall, Languages, Layers, DollarSign
+  ChevronLeft, Share2, AlertCircle, Check, X, 
+  Building2, Tag, Scale, IndianRupee, Calendar, 
+  Calculator, PhoneCall, Globe, Clock, Languages, 
+  Layers, Eye, BookOpen, FileText, Barcode as BarcodeIcon, 
+  Image as ImageIcon, RefreshCw, Copy, CheckCircle2,
+  ExternalLink, Sparkles, ChevronDown, ChevronUp
 } from 'lucide-react';
-import { AuditReport } from '../../types/compliance';
-import { calculateProductGrade, calculateDomainScores, getPlainEnglishSummary } from '../../utils/grading';
+import { AuditReport, ChecklistItem } from '../../types/compliance';
+import { calculateProductGrade } from '../../utils/grading';
 import { CanvasViewer } from '../inspection/CanvasViewer';
 import { OCRRawTextViewer } from './OCRRawTextViewer';
 import { BarcodeSymbolsCard } from './BarcodeSymbolsCard';
@@ -28,80 +28,92 @@ const formatPenaltyText = (val: any): string => {
   return String(val);
 };
 
-// Map each statutory mandate to an unmistakable visual icon & badge styling
-const getMandateIconConfig = (mandateId: string) => {
+// Map each statutory mandate to an icon, background tint, and default rule text
+const getMandateConfig = (mandateId: string) => {
   switch (mandateId) {
     case 'mfg_address':
       return {
+        title: 'Manufacturer Address',
         icon: Building2,
-        category: 'Origin & Facility',
-        iconBg: 'bg-blue-100 text-blue-700 border-blue-200',
+        iconBg: 'bg-[#E0F7FA] text-[#00BCD4]',
+        defaultRule: 'FSSAI-2024-ADR',
       };
     case 'generic_name':
       return {
+        title: 'Generic or Common Name',
         icon: Tag,
-        category: 'Identity & Nature',
-        iconBg: 'bg-amber-100 text-amber-700 border-amber-200',
+        iconBg: 'bg-[#EDE7F6] text-[#7E57C2]',
+        defaultRule: 'LEGAL-METRO-NAM',
       };
     case 'net_quantity':
       return {
+        title: 'Net Quantity',
         icon: Scale,
-        category: 'Metrology Weight',
-        iconBg: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+        iconBg: 'bg-[#FCE4EC] text-[#E91E63]',
+        defaultRule: 'RULE: NET-QTY-SI',
       };
     case 'mrp':
       return {
-        icon: DollarSign,
-        category: 'Consumer Price',
-        iconBg: 'bg-purple-100 text-purple-700 border-purple-200',
+        title: 'MRP Details',
+        icon: IndianRupee,
+        iconBg: 'bg-[#E0F7FA] text-[#00BCD4]',
+        defaultRule: 'PRICE-NORM-SEC3',
       };
     case 'mfg_date':
       return {
+        title: 'MFG/ Packing Date',
         icon: Calendar,
-        category: 'Batch & Packing',
-        iconBg: 'bg-cyan-100 text-cyan-700 border-cyan-200',
+        iconBg: 'bg-[#F9FBE7] text-[#9E9D24]',
+        defaultRule: 'EXP-MFG-VISIBILITY',
       };
     case 'usp':
       return {
+        title: 'Unit Sale Price (USP)',
         icon: Calculator,
-        category: 'Unit Sale Rate',
-        iconBg: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+        iconBg: 'bg-[#EDE7F6] text-[#5C6BC0]',
+        defaultRule: 'G.S.R. 779(E)',
       };
     case 'consumer_care':
       return {
+        title: 'Consumer Care Details',
         icon: PhoneCall,
-        category: 'Grievance Redressal',
-        iconBg: 'bg-green-100 text-green-700 border-green-200',
+        iconBg: 'bg-[#E8F5E9] text-[#43A047]',
+        defaultRule: 'RULE: 6(1)(h)',
       };
     case 'country_of_origin':
       return {
+        title: 'Country of Origin',
         icon: Globe,
-        category: 'Customs & Origin',
-        iconBg: 'bg-sky-100 text-sky-700 border-sky-200',
+        iconBg: 'bg-[#E1F5FE] text-[#0288D1]',
+        defaultRule: 'RULE: 6(1)(g)',
       };
     case 'best_before':
       return {
-        icon: Calendar,
-        category: 'Shelf Life & Safety',
-        iconBg: 'bg-orange-100 text-orange-700 border-orange-200',
+        title: 'Best Before / Expiry Date',
+        icon: Clock,
+        iconBg: 'bg-[#FFF3E0] text-[#FB8C00]',
+        defaultRule: 'RULE: 6(1)(f)',
       };
     case 'language':
       return {
+        title: 'Language Compliance',
         icon: Languages,
-        category: 'Official Languages',
-        iconBg: 'bg-teal-100 text-teal-700 border-teal-200',
+        iconBg: 'bg-[#E0F2F1] text-[#00897B]',
+        defaultRule: 'RULE: 9(4)',
       };
     case 'dual_mrp':
       return {
+        title: 'Dual MRP Verification',
         icon: Layers,
-        category: 'Fair Pricing Law',
-        iconBg: 'bg-rose-100 text-rose-700 border-rose-200',
+        iconBg: 'bg-[#FBE9E7] text-[#E64A19]',
+        defaultRule: 'RULE: 18(2A)',
       };
     default:
       return {
-        icon: ShieldCheck,
-        category: 'Statutory Clause',
-        iconBg: 'bg-zinc-100 text-zinc-700 border-zinc-200',
+        title: mandateId.replace(/_/g, ' ').toUpperCase(),
+        icon: Building2,
+        iconBg: 'bg-zinc-100 text-zinc-600',
+        defaultRule: 'LMPC-2011',
       };
   }
 };
@@ -113,812 +125,525 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
   onOpenComplaint,
   onRescan,
 }) => {
+  const [activeTab, setActiveTab] = useState<'details' | 'canvas' | 'barcodes' | 'gazette'>('details');
+  const [expandedMandateId, setExpandedMandateId] = useState<string | null>(null);
   const [activeBoxId, setActiveBoxId] = useState<string | null>(null);
   const [selectedMandateId, setSelectedMandateId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'barcodes' | 'canvas' | 'gazette'>('overview');
-  const [filter, setFilter] = useState<'ALL' | 'VIOLATION' | 'WARNING' | 'COMPLIANT'>('ALL');
-  const [hoveredSlice, setHoveredSlice] = useState<string | null>(null);
-  const [expandedCitationId, setExpandedCitationId] = useState<string | null>(null);
   const [selectedPanelIndex, setSelectedPanelIndex] = useState<number>(0);
+  const [copiedShare, setCopiedShare] = useState(false);
 
   if (!report) return null;
 
   const gradeInfo = calculateProductGrade(report);
-  const domainScores = calculateDomainScores(report.checklist || []);
+  const isLawful = gradeInfo.lawfulForSale;
+  const score = Math.max(0, Math.min(100, report.compliance_score ?? 0));
 
-  const summary = report.summary || {
-    total_mandates_checked: (report.checklist || []).length || 11,
-    compliant_count: (report.checklist || []).filter((c) => c.status === 'COMPLIANT').length,
-    warnings_count: (report.checklist || []).filter((c) => c.status === 'WARNING').length,
-    violations_count: (report.checklist || []).filter((c) => c.status === 'VIOLATION').length,
+  // Gauge calculations for 180° semicircle
+  const cx = 120;
+  const cy = 115;
+  const r = 85;
+  const circumference = Math.PI * r; // ~267.03
+  const strokeDash = (score / 100) * circumference;
+
+  // Pink needle tick coordinates
+  const angleDeg = 180 - (score / 100) * 180;
+  const angleRad = angleDeg * (Math.PI / 180);
+  const x1 = cx + (r - 12) * Math.cos(angleRad);
+  const y1 = cy - (r - 12) * Math.sin(angleRad);
+  const x2 = cx + (r + 12) * Math.cos(angleRad);
+  const y2 = cy - (r + 12) * Math.sin(angleRad);
+
+  // Nutritional values from report or calibrated fallback matching reference
+  const ld = report.label_data || {};
+  const nutrition = {
+    calories: Number(ld.calories || ld.energy_kcal || ld.energy || 450),
+    fat: Number(ld.total_fat || ld.fat || 12),
+    carbs: Number(ld.carbohydrates || ld.carbs || 65),
+    protein: Number(ld.protein || 8),
+    sugar: Number(ld.sugars || ld.sugar || 24),
   };
-
-  const total = summary.total_mandates_checked || 11;
-  const compliant = summary.compliant_count || 0;
-  const warnings = summary.warnings_count || 0;
-  const violations = summary.violations_count || 0;
-
-  // Donut / Pie Chart calculations
-  const radius = 58;
-  const strokeWidth = 14;
-  const circumference = 2 * Math.PI * radius;
-
-  const compliantPercent = total > 0 ? (compliant / total) * 100 : 0;
-  const warningPercent = total > 0 ? (warnings / total) * 100 : 0;
-  const violationPercent = total > 0 ? (violations / total) * 100 : 0;
-
-  const strokeCompliant = (compliantPercent / 100) * circumference;
-  const strokeWarning = (warningPercent / 100) * circumference;
-  const strokeViolation = (violationPercent / 100) * circumference;
-
-  const offsetCompliant = 0;
-  const offsetWarning = -strokeCompliant;
-  const offsetViolation = -(strokeCompliant + strokeWarning);
-
-  const usp = report.usp_verification;
-  const isUspValid = usp?.status === 'COMPLIANT';
-
-  const filteredItems = (report.checklist || []).filter((item) => {
-    if (filter === 'ALL') return true;
-    return item.status === filter;
-  });
 
   const handleSpotlight = (mandateId: string) => {
     setSelectedMandateId(mandateId);
-    const match = report.bounding_boxes?.find((b) => b.mandate_id === mandateId);
-    if (match) {
-      setActiveBoxId(match.id);
-    }
     setActiveTab('canvas');
   };
 
-  const isLawful = gradeInfo.lawfulForSale;
+  const handleShare = async () => {
+    const text = `NutriScan / LabelScout Audit: ${report.product_name} - Grade ${gradeInfo.grade} (${report.compliance_score}% Compliance Score)`;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Product Details Audit',
+          text,
+          url: window.location.href,
+        });
+        return;
+      } catch {
+        // Fallback to clipboard
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedShare(true);
+      setTimeout(() => setCopiedShare(false), 2000);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const checklistItems = report.checklist || [];
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-[#F0EDE3] text-zinc-900 selection:bg-rose-500/20 selection:text-rose-900 flex flex-col font-sans antialiased">
+    <div className="fixed inset-0 z-50 bg-[#F7F6F0] overflow-y-auto flex flex-col font-sans antialiased text-zinc-900">
       
-      {/* Dynamic Ambient Mesh Glow Background */}
-      <div 
-        className="fixed inset-0 pointer-events-none -z-0 opacity-40"
-        style={{
-          backgroundImage: `
-            radial-gradient(at 10% 15%, rgba(244, 63, 94, 0.08) 0px, transparent 50%),
-            radial-gradient(at 90% 10%, rgba(16, 185, 129, 0.08) 0px, transparent 45%),
-            radial-gradient(at 50% 85%, rgba(245, 158, 11, 0.06) 0px, transparent 60%)
-          `
-        }}
-      />
-
-      {/* Top Floating App Bar */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-zinc-200/90 px-4 sm:px-8 py-3.5 shadow-sm">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          
-          <div className="flex items-center gap-3">
-            <button
-              onClick={onClose}
-              className="px-3.5 py-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-700 hover:text-zinc-950 border border-zinc-200 flex items-center gap-2 font-medium text-xs transition-all active:scale-95 shadow-xs"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back to Scanner</span>
-            </button>
-
-            <div className="h-5 w-px bg-zinc-200 hidden sm:block" />
-
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] uppercase font-mono font-bold text-rose-600 tracking-wider">
-                  STATUTORY AUDIT CONSOLE
-                </span>
-                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse hidden sm:inline-block" />
-              </div>
-              <h1 className="text-base sm:text-lg font-black text-zinc-900 truncate max-w-[220px] sm:max-w-md tracking-tight leading-none mt-0.5">
-                {report.product_name}
-              </h1>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {onRescan && (
-              <button
-                onClick={onRescan}
-                className="hidden sm:flex px-3.5 py-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-700 hover:text-zinc-950 border border-zinc-200 font-semibold text-xs items-center gap-1.5 transition-colors shadow-xs"
-              >
-                <RefreshCw className="w-3.5 h-3.5 text-zinc-500" />
-                <span>Rescan</span>
-              </button>
-            )}
-
-            <button
-              onClick={onOpenNotice}
-              className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 shadow-md transition-all active:scale-95 ${
-                isLawful
-                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20'
-                  : 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/20'
-              }`}
-            >
-              <FileText className="w-4 h-4" />
-              <span className="hidden sm:inline">
-                {isLawful ? 'View Official Certificate' : 'Issue Rule 32 Legal Notice'}
-              </span>
-              <span className="sm:hidden">
-                {isLawful ? 'Certificate' : 'Notice'}
-              </span>
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Full-Page Scrollable Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-8 py-6 space-y-6 relative z-10">
+      {/* Centered App Container matching exact mobile/desktop layout */}
+      <div className="w-full max-w-md mx-auto min-h-screen flex flex-col px-4 py-5 sm:py-7 space-y-5">
         
-        {/* 1. Hero Status Card */}
-        <section className="bg-white rounded-2xl p-6 sm:p-8 border border-zinc-200/90 shadow-sm relative overflow-hidden">
-          
-          {/* Top Edge Gradient Stripe */}
-          <div className={`absolute top-0 left-0 right-0 h-1.5 ${
-            isLawful 
-              ? 'bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-600'
-              : 'bg-gradient-to-r from-amber-500 via-rose-500 to-rose-600'
-          }`} />
-
-          {/* Background Holographic Watermark */}
-          <div className="absolute -bottom-10 -right-10 opacity-[0.03] pointer-events-none select-none">
-            <Scale className="w-80 h-80 text-zinc-900" />
-          </div>
-
-          <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            
-            {/* Left Column: Grade Badge + Identity */}
-            <div className="flex items-start sm:items-center gap-5">
-              
-              {/* Vibrant Grade Badge Square */}
-              <div className="flex flex-col items-center">
-                <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-2xl flex flex-col items-center justify-center font-black shadow-lg shrink-0 ${
-                  isLawful 
-                    ? 'bg-gradient-to-br from-emerald-500 to-teal-700 text-white'
-                    : 'bg-gradient-to-br from-amber-500 via-rose-500 to-rose-700 text-white'
-                }`}>
-                  <span className="text-3xl sm:text-4xl leading-none tracking-tight">{gradeInfo.grade}</span>
-                  <span className="text-[10px] sm:text-[11px] tracking-widest uppercase font-bold mt-1 opacity-95">
-                    GRADE
-                  </span>
-                </div>
-                <div className="mt-2 text-center">
-                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black uppercase tracking-wider ${
-                    isLawful 
-                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                      : 'bg-rose-50 text-rose-700 border border-rose-200'
-                  }`}>
-                    {isLawful ? 'LOW RISK' : 'HIGH RISK'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Identity & Legal Posture */}
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="px-2.5 py-0.5 rounded-md bg-zinc-100 border border-zinc-200 text-zinc-700 text-[11px] font-mono font-bold">
-                    {report.audit_id}
-                  </span>
-                  <span className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wide flex items-center gap-1.5 ${
-                    isLawful
-                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                      : 'bg-rose-50 text-rose-800 border border-rose-200'
-                  }`}>
-                    {isLawful ? <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> : <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />}
-                    <span>{isLawful ? 'LAWFUL FOR DISTRIBUTION' : 'STATUTORY CONTRAVENTION DETECTED'}</span>
-                  </span>
-                </div>
-
-                <h2 className="text-2xl sm:text-3xl font-black text-zinc-900 tracking-tight">
-                  {report.product_name}
-                </h2>
-
-                <p className="text-sm font-medium text-zinc-600 max-w-xl leading-relaxed">
-                  {gradeInfo.description}
-                </p>
-
-                <div className="pt-2 flex items-center gap-3 sm:gap-4 text-xs font-medium text-zinc-500 flex-wrap">
-                  <span className="flex items-center gap-1.5">
-                    <span>Audit:</span>
-                    <strong className="text-zinc-800 font-mono">
-                      {report.audit_timestamp ? new Date(report.audit_timestamp).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'Live'}
-                    </strong>
-                  </span>
-                  <span className="text-zinc-300">|</span>
-                  <span className="flex items-center gap-1.5">
-                    <span>Corpus:</span>
-                    <strong className="text-indigo-700 font-mono">
-                      LMPC Gazette v{report.corpus_version || '2024.1'}
-                    </strong>
-                  </span>
-                  <span className="text-zinc-300">|</span>
-                  <span className="flex items-center gap-1.5">
-                    <span>Penalty Exposure:</span>
-                    <strong className="text-rose-600 font-mono">
-                      {gradeInfo.penaltyEstimate}
-                    </strong>
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Column: Key Metrology Metrics Tiles */}
-            <div className="grid grid-cols-2 gap-3 w-full md:w-auto shrink-0">
-              <div className="bg-zinc-50 p-4 rounded-xl border border-zinc-200/80 text-center min-w-[130px] shadow-2xs">
-                <span className="text-[10px] font-bold uppercase text-zinc-500 tracking-wider">
-                  Compliance Score
-                </span>
-                <p className="text-3xl font-black text-zinc-900 mt-1 font-mono tracking-tight">
-                  {report.compliance_score}%
-                </p>
-                <span className="text-[11px] text-zinc-500 font-medium">
-                  {total} Mandates Audited
-                </span>
-              </div>
-
-              <div className="bg-zinc-50 p-4 rounded-xl border border-zinc-200/80 text-center min-w-[130px] shadow-2xs">
-                <span className="text-[10px] font-bold uppercase text-zinc-500 tracking-wider">
-                  Defects Found
-                </span>
-                <p className={`text-3xl font-black mt-1 font-mono tracking-tight ${violations > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
-                  {violations}
-                </p>
-                <span className="text-[11px] text-zinc-500 font-medium">
-                  {violations === 0 ? 'Zero Violations' : `${violations} Non-Compliant`}
-                </span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 2. Analytical Visual Graphs & Charts Section */}
-        <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
-          {/* Donut / Pie Chart Column (7 cols) */}
-          <div className="lg:col-span-7 bg-white rounded-2xl p-6 sm:p-7 border border-zinc-200/90 shadow-sm flex flex-col justify-between">
-            <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
-              <div>
-                <h3 className="text-sm font-black uppercase tracking-wider text-zinc-900">
-                  Statutory Compliance Breakdown
-                </h3>
-                <p className="text-xs text-zinc-500 mt-0.5">
-                  Proportionate compliance across mandatory Legal Metrology declarations
-                </p>
-              </div>
-              <span className="px-3 py-1 rounded-full text-xs font-bold font-mono bg-zinc-100 text-zinc-700 border border-zinc-200">
-                {total} Mandates
-              </span>
-            </div>
-
-            <div className="py-6 flex flex-col sm:flex-row items-center justify-center gap-8">
-              
-              {/* Interactive SVG Donut Ring */}
-              <div className="relative w-48 h-48 flex items-center justify-center shrink-0">
-                <svg className="w-full h-full -rotate-90 transform drop-shadow-sm" viewBox="0 0 160 160">
-                  {/* Track ring */}
-                  <circle cx="80" cy="80" r={radius} stroke="#e4e4e7" strokeWidth={strokeWidth} fill="none" />
-
-                  {/* Compliant Arc */}
-                  {compliant > 0 && (
-                    <circle
-                      cx="80"
-                      cy="80"
-                      r={radius}
-                      stroke="#10b981"
-                      strokeWidth={hoveredSlice === 'compliant' ? strokeWidth + 4 : strokeWidth}
-                      strokeDasharray={`${strokeCompliant} ${circumference}`}
-                      strokeDashoffset={offsetCompliant}
-                      strokeLinecap="round"
-                      fill="none"
-                      className="transition-all duration-300 cursor-pointer"
-                      onMouseEnter={() => setHoveredSlice('compliant')}
-                      onMouseLeave={() => setHoveredSlice(null)}
-                    />
-                  )}
-
-                  {/* Warnings Arc */}
-                  {warnings > 0 && (
-                    <circle
-                      cx="80"
-                      cy="80"
-                      r={radius}
-                      stroke="#f59e0b"
-                      strokeWidth={hoveredSlice === 'warnings' ? strokeWidth + 4 : strokeWidth}
-                      strokeDasharray={`${strokeWarning} ${circumference}`}
-                      strokeDashoffset={offsetWarning}
-                      strokeLinecap="round"
-                      fill="none"
-                      className="transition-all duration-300 cursor-pointer"
-                      onMouseEnter={() => setHoveredSlice('warnings')}
-                      onMouseLeave={() => setHoveredSlice(null)}
-                    />
-                  )}
-
-                  {/* Violations Arc */}
-                  {violations > 0 && (
-                    <circle
-                      cx="80"
-                      cy="80"
-                      r={radius}
-                      stroke="#f43f5e"
-                      strokeWidth={hoveredSlice === 'violations' ? strokeWidth + 4 : strokeWidth}
-                      strokeDasharray={`${strokeViolation} ${circumference}`}
-                      strokeDashoffset={offsetViolation}
-                      strokeLinecap="round"
-                      fill="none"
-                      className="transition-all duration-300 cursor-pointer"
-                      onMouseEnter={() => setHoveredSlice('violations')}
-                      onMouseLeave={() => setHoveredSlice(null)}
-                    />
-                  )}
-                </svg>
-
-                {/* Center Seal */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
-                  <span className="text-4xl font-black text-zinc-900 tracking-tight leading-none">
-                    {gradeInfo.grade}
-                  </span>
-                  <span className="text-[11px] font-extrabold text-zinc-500 uppercase tracking-widest mt-1 font-mono">
-                    {report.compliance_score}%
-                  </span>
-                </div>
-              </div>
-
-              {/* Interactive Legend Cards */}
-              <div className="space-y-3 w-full sm:w-64">
-                <div
-                  onMouseEnter={() => setHoveredSlice('compliant')}
-                  onMouseLeave={() => setHoveredSlice(null)}
-                  className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
-                    hoveredSlice === 'compliant'
-                      ? 'bg-emerald-50 border-emerald-300 scale-102 shadow-xs'
-                      : 'bg-zinc-50 border-zinc-200/80 hover:bg-zinc-100/80'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0 shadow-xs" />
-                    <div>
-                      <p className="font-bold text-xs text-zinc-900">Compliant (Pass)</p>
-                      <p className="text-[10px] text-zinc-500 font-medium">Satisfies statutory rules</p>
-                    </div>
-                  </div>
-                  <span className="text-sm font-black font-mono text-emerald-700">
-                    {compliant} <span className="text-[11px] text-zinc-500 font-sans">({Math.round(compliantPercent)}%)</span>
-                  </span>
-                </div>
-
-                <div
-                  onMouseEnter={() => setHoveredSlice('warnings')}
-                  onMouseLeave={() => setHoveredSlice(null)}
-                  className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
-                    hoveredSlice === 'warnings'
-                      ? 'bg-amber-50 border-amber-300 scale-102 shadow-xs'
-                      : 'bg-zinc-50 border-zinc-200/80 hover:bg-zinc-100/80'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0 shadow-xs" />
-                    <div>
-                      <p className="font-bold text-xs text-zinc-900">Format Advisories</p>
-                      <p className="text-[10px] text-zinc-500 font-medium">Non-penal corrections</p>
-                    </div>
-                  </div>
-                  <span className="text-sm font-black font-mono text-amber-700">
-                    {warnings} <span className="text-[11px] text-zinc-500 font-sans">({Math.round(warningPercent)}%)</span>
-                  </span>
-                </div>
-
-                <div
-                  onMouseEnter={() => setHoveredSlice('violations')}
-                  onMouseLeave={() => setHoveredSlice(null)}
-                  className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
-                    hoveredSlice === 'violations'
-                      ? 'bg-rose-50 border-rose-300 scale-102 shadow-xs'
-                      : 'bg-zinc-50 border-zinc-200/80 hover:bg-zinc-100/80'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0 shadow-xs" />
-                    <div>
-                      <p className="font-bold text-xs text-zinc-900">Critical Violations</p>
-                      <p className="text-[10px] text-zinc-500 font-medium">Rule 32 penalty liability</p>
-                    </div>
-                  </div>
-                  <span className="text-sm font-black font-mono text-rose-700">
-                    {violations} <span className="text-[11px] text-zinc-500 font-sans">({Math.round(violationPercent)}%)</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-3 border-t border-zinc-100 flex items-center justify-between text-xs text-zinc-500">
-              <span>Authority: Dept. of Consumer Affairs, Legal Metrology Division</span>
-              <span className="font-bold text-zinc-700 font-mono">G.S.R. 784(E) 2024</span>
-            </div>
-          </div>
-
-          {/* 4 Pillars Legal Category Graph (5 cols) */}
-          <div className="lg:col-span-5 bg-white rounded-2xl p-6 sm:p-7 border border-zinc-200/90 shadow-sm flex flex-col justify-between space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
-              <div>
-                <h3 className="text-sm font-black uppercase tracking-wider text-zinc-900">
-                  4 Legal Domain Pillar Scores
-                </h3>
-                <p className="text-xs text-zinc-500 mt-0.5">
-                  Automated metric weights across statutory pillars
-                </p>
-              </div>
-              <span className="text-xs font-bold text-zinc-500 font-mono">Target: 100%</span>
-            </div>
-
-            <div className="space-y-3 py-1">
-              {domainScores.map((domain) => (
-                <div key={domain.id} className="space-y-1.5 bg-zinc-50 p-3 rounded-xl border border-zinc-200/80">
-                  <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full shadow-xs" style={{ backgroundColor: domain.color }} />
-                      <span className="font-bold text-zinc-800">{domain.name}</span>
-                    </div>
-                    <span className="font-black font-mono text-zinc-900 text-xs">
-                      {domain.score}%
-                    </span>
-                  </div>
-
-                  {/* Progress Bar Track */}
-                  <div className="h-2 w-full bg-zinc-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-700 shadow-xs"
-                      style={{ width: `${domain.score}%`, backgroundColor: domain.color }}
-                    />
-                  </div>
-
-                  <p className="text-[10px] text-zinc-500 font-medium pt-0.5">
-                    {domain.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            <div className="pt-2 text-[11px] text-zinc-400 font-medium">
-              Ground truth verified against LMPC 2011 Rules &amp; Decriminalization Amendments.
-            </div>
-          </div>
-        </section>
-
-        {/* 3. Mathematical USP Verification Visualizer */}
-        {usp && (
-          <section className="bg-white rounded-2xl p-6 sm:p-7 border border-zinc-200/90 shadow-sm space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-100">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-purple-50 border border-purple-200 text-purple-700 flex items-center justify-center shadow-xs">
-                  <Calculator className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-black uppercase tracking-wider text-zinc-900">
-                    Unit Sale Price (USP) Mathematical Verification
-                  </h3>
-                  <p className="text-xs text-zinc-500">
-                    Statutory computation audit under Rule 6(1)(s) and Rule 6(11) (G.S.R. 779(E))
-                  </p>
-                </div>
-              </div>
-
-              <span
-                className={`px-3 py-1 rounded-md text-xs font-black tracking-wide uppercase self-start sm:self-auto ${
-                  isUspValid
-                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                    : 'bg-rose-50 text-rose-800 border border-rose-200 animate-pulse'
-                }`}
-              >
-                {isUspValid ? 'STATUTORILY ACCURATE' : 'USP STATUTORY MISMATCH / OMITTED'}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-zinc-50 p-4 rounded-xl border border-zinc-200/80 space-y-1">
-                <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">
-                  Printed on Label
-                </span>
-                <p className="text-xl font-black text-zinc-900 font-mono">
-                  {usp.printed || '[NOT DECLARED]'}
-                </p>
-                <p className="text-xs text-zinc-500">Extracted from packaging OCR token scan</p>
-              </div>
-
-              <div className="bg-zinc-50 p-4 rounded-xl border border-zinc-200/80 space-y-1">
-                <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">
-                  Mandated Calculated Rate
-                </span>
-                <p className="text-xl font-black text-emerald-700 font-mono">
-                  {usp.calculated?.expected_display || 'N/A'}
-                </p>
-                <p className="text-xs text-zinc-500 font-mono">
-                  Formula: {usp.calculated?.formula || 'MRP ÷ Net Quantity'}
-                </p>
-              </div>
-
-              <div
-                className={`p-4 rounded-xl border space-y-1 ${
-                  isUspValid
-                    ? 'bg-emerald-50/80 border-emerald-200 text-emerald-900'
-                    : 'bg-rose-50/80 border-rose-200 text-rose-900'
-                }`}
-              >
-                <span className="text-[10px] uppercase font-bold tracking-wider opacity-80">
-                  Enforcement Finding
-                </span>
-                <p className="text-sm font-black leading-snug">
-                  {isUspValid ? 'Mathematical Tolerance Satisfied' : 'Actionable Discrepancy'}
-                </p>
-                <p className="text-xs opacity-90 leading-relaxed">
-                  {usp.discrepancy || usp.reason || 'Unit sale price satisfies legal metrology standard.'}
-                </p>
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* 4. Tab Navigation for Detailed Sections - Clean, Responsive 4-Button Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 p-1.5 bg-zinc-200/70 rounded-2xl border border-zinc-200">
+        {/* Top App Header */}
+        <header className="flex items-center justify-between">
           <button
-            onClick={() => setActiveTab('overview')}
-            className={`px-3 sm:px-4 py-3 rounded-xl flex items-center justify-center gap-2 transition-all font-bold text-xs ${
-              activeTab === 'overview'
-                ? 'bg-rose-600 text-white shadow-sm'
-                : 'bg-white text-zinc-700 hover:bg-zinc-50 hover:text-zinc-950 border border-zinc-200/80'
-            }`}
+            onClick={onClose}
+            className="w-10 h-10 rounded-xl bg-[#12161A] hover:bg-black text-white flex items-center justify-center transition-all active:scale-95 shadow-sm"
+            aria-label="Back"
           >
-            <CheckSquare className="w-4 h-4 shrink-0" />
-            <span className="truncate">11 Mandates ({compliant}/{total})</span>
+            <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
           </button>
 
-          <button
-            onClick={() => setActiveTab('barcodes')}
-            className={`px-3 sm:px-4 py-3 rounded-xl flex items-center justify-center gap-2 transition-all font-bold text-xs ${
-              activeTab === 'barcodes'
-                ? 'bg-rose-600 text-white shadow-sm'
-                : 'bg-white text-zinc-700 hover:bg-zinc-50 hover:text-zinc-950 border border-zinc-200/80'
-            }`}
-          >
-            <BarcodeIcon className="w-4 h-4 shrink-0" />
-            <span className="truncate">Barcode &amp; Symbols</span>
-            {report.barcode_data?.detected && (
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+          <h1 className="font-black text-base sm:text-lg text-[#12161A] tracking-tight">
+            Product Details
+          </h1>
+
+          <div className="relative">
+            <button
+              onClick={handleShare}
+              className="w-10 h-10 rounded-xl bg-[#12161A] hover:bg-black text-white flex items-center justify-center transition-all active:scale-95 shadow-sm"
+              aria-label="Share"
+            >
+              {copiedShare ? (
+                <Check className="w-4 h-4 text-[#D5FF3F]" />
+              ) : (
+                <Share2 className="w-4 h-4" />
+              )}
+            </button>
+            {copiedShare && (
+              <span className="absolute -bottom-7 right-0 text-[10px] font-bold bg-black text-white px-2 py-0.5 rounded shadow-md whitespace-nowrap">
+                Copied!
+              </span>
             )}
-          </button>
+          </div>
+        </header>
 
+        {/* View Mode Navigation Switcher (Main Details vs Canvas vs Barcodes vs Gazette) */}
+        <div className="flex items-center gap-1.5 p-1 bg-zinc-200/80 rounded-xl text-xs font-bold">
+          <button
+            onClick={() => setActiveTab('details')}
+            className={`flex-1 py-1.5 px-2 rounded-lg transition-all text-center ${
+              activeTab === 'details'
+                ? 'bg-black text-white shadow-xs'
+                : 'text-zinc-600 hover:text-black'
+            }`}
+          >
+            Audit Report
+          </button>
           <button
             onClick={() => setActiveTab('canvas')}
-            className={`px-3 sm:px-4 py-3 rounded-xl flex items-center justify-center gap-2 transition-all font-bold text-xs ${
+            className={`flex-1 py-1.5 px-2 rounded-lg transition-all text-center ${
               activeTab === 'canvas'
-                ? 'bg-rose-600 text-white shadow-sm'
-                : 'bg-white text-zinc-700 hover:bg-zinc-50 hover:text-zinc-950 border border-zinc-200/80'
+                ? 'bg-black text-white shadow-xs'
+                : 'text-zinc-600 hover:text-black'
             }`}
           >
-            <ImageIcon className="w-4 h-4 shrink-0" />
-            <span className="truncate">Spatial Canvas</span>
+            Canvas
           </button>
-
+          <button
+            onClick={() => setActiveTab('barcodes')}
+            className={`flex-1 py-1.5 px-2 rounded-lg transition-all text-center ${
+              activeTab === 'barcodes'
+                ? 'bg-black text-white shadow-xs'
+                : 'text-zinc-600 hover:text-black'
+            }`}
+          >
+            Barcodes
+          </button>
           <button
             onClick={() => setActiveTab('gazette')}
-            className={`px-3 sm:px-4 py-3 rounded-xl flex items-center justify-center gap-2 transition-all font-bold text-xs ${
+            className={`flex-1 py-1.5 px-2 rounded-lg transition-all text-center ${
               activeTab === 'gazette'
-                ? 'bg-rose-600 text-white shadow-sm'
-                : 'bg-white text-zinc-700 hover:bg-zinc-50 hover:text-zinc-950 border border-zinc-200/80'
+                ? 'bg-black text-white shadow-xs'
+                : 'text-zinc-600 hover:text-black'
             }`}
           >
-            <BookOpen className="w-4 h-4 shrink-0" />
-            <span className="truncate">Gazette Citations</span>
+            Gazette
           </button>
         </div>
 
-        {/* TAB A: 11 Mandates Breakdown (Clause Inspection List with Filter Tabs) */}
-        {activeTab === 'overview' && (
-          <section className="bg-white rounded-2xl p-6 sm:p-8 border border-zinc-200/90 shadow-sm space-y-5">
+        {/* MAIN TAB: EXACT IMAGE LAYOUT */}
+        {activeTab === 'details' && (
+          <div className="space-y-5">
             
-            {/* Filter Pills Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-100">
-              <div>
-                <h3 className="text-sm font-black uppercase tracking-wider text-zinc-900">
-                  Statutory Clause Inspection List
-                </h3>
-                <p className="text-xs text-zinc-500 mt-0.5">
-                  Click any item to inspect its official Gazette clause, penalty exposure, or spotlight on packaging
+            {/* Product Title Block + Grade Tag */}
+            <div className="flex items-start justify-between gap-3 pt-1">
+              <div className="space-y-0.5 flex-1 min-w-0">
+                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-[#12161A] uppercase leading-tight">
+                  {report.product_name}
+                </h2>
+                <p className="text-[11px] font-mono font-bold text-zinc-500 uppercase tracking-wider">
+                  PACKAGED FOOD • {report.product_category?.toUpperCase() || 'BRANDX'}
                 </p>
               </div>
 
-              {/* Filter Tabs matching HTML mockup */}
-              <div className="flex items-center gap-1.5 bg-zinc-100 p-1 rounded-xl text-xs font-bold shrink-0 self-start sm:self-auto border border-zinc-200">
-                <button
-                  onClick={() => setFilter('ALL')}
-                  className={`px-3 py-1 rounded-lg transition-all ${
-                    filter === 'ALL' ? 'bg-white text-zinc-900 shadow-2xs' : 'text-zinc-600 hover:text-zinc-900'
-                  }`}
-                >
-                  All ({report.checklist?.length || 11})
-                </button>
-                {violations > 0 && (
-                  <button
-                    onClick={() => setFilter('VIOLATION')}
-                    className={`px-3 py-1 rounded-lg transition-all ${
-                      filter === 'VIOLATION' ? 'bg-rose-600 text-white shadow-2xs' : 'text-rose-600 hover:bg-rose-50'
-                    }`}
-                  >
-                    Violations ({violations})
-                  </button>
-                )}
-                {warnings > 0 && (
-                  <button
-                    onClick={() => setFilter('WARNING')}
-                    className={`px-3 py-1 rounded-lg transition-all ${
-                      filter === 'WARNING' ? 'bg-amber-600 text-white shadow-2xs' : 'text-amber-700 hover:bg-amber-50'
-                    }`}
-                  >
-                    Advisories ({warnings})
-                  </button>
-                )}
-                <button
-                  onClick={() => setFilter('COMPLIANT')}
-                  className={`px-3 py-1 rounded-lg transition-all ${
-                    filter === 'COMPLIANT' ? 'bg-emerald-600 text-white shadow-2xs' : 'text-emerald-700 hover:bg-emerald-50'
-                  }`}
-                >
-                  Pass ({compliant})
-                </button>
+              {/* Neo-brutalist Grade Pill */}
+              <div className="bg-[#D5FF3F] text-black border-2 border-black font-black px-3.5 py-1.5 rounded-xl text-xs tracking-wider shadow-[2px_2px_0px_#000] shrink-0 transform -rotate-1">
+                {gradeInfo.grade} GRADE
               </div>
             </div>
 
-            {/* Mandate Cards List with Distinct Icons */}
-            <div className="space-y-3.5">
-              {filteredItems.map((item) => {
+            {/* Section 1: Label Compliance */}
+            <section className="space-y-3">
+              {/* Header with Purple Bar */}
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-5 bg-[#8B5CF6] rounded-full inline-block" />
+                <h3 className="text-base sm:text-lg font-black text-[#12161A] tracking-tight">
+                  Label Compliance
+                </h3>
+              </div>
+
+              {/* Semicircular Speedometer Gauge Card */}
+              <div className="bg-[#131722] rounded-3xl p-6 text-white text-center relative overflow-hidden shadow-lg border border-black">
+                {/* Background decorative purple blur bubble */}
+                <div className="w-44 h-44 rounded-full bg-[#2C2B4E]/60 absolute -top-10 -right-10 pointer-events-none blur-[1px]" />
+
+                {/* SVG Gauge */}
+                <svg className="w-full max-w-[260px] mx-auto overflow-visible" viewBox="0 0 240 135">
+                  {/* Top 50 label */}
+                  <text x="120" y="16" fill="#9CA3AF" fontSize="10" fontWeight="bold" textAnchor="middle" letterSpacing="1">
+                    50
+                  </text>
+
+                  {/* Background Track Arc */}
+                  <path
+                    d="M 35,115 A 85,85 0 0,1 205,115"
+                    fill="none"
+                    stroke="#2B313F"
+                    strokeWidth="14"
+                    strokeLinecap="round"
+                  />
+
+                  {/* Active Arc */}
+                  <path
+                    d="M 35,115 A 85,85 0 0,1 205,115"
+                    fill="none"
+                    stroke="#D5FF3F"
+                    strokeWidth="14"
+                    strokeLinecap="round"
+                    strokeDasharray={`${strokeDash} ${circumference}`}
+                    className="transition-all duration-700 ease-out"
+                  />
+
+                  {/* Pink Indicator Needle Tick */}
+                  <line
+                    x1={x1}
+                    y1={y1}
+                    x2={x2}
+                    y2={y2}
+                    stroke="#FF2A85"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                  />
+
+                  {/* Center Text inside Arc */}
+                  <text x="120" y="85" textAnchor="middle" fill="#FFFFFF" fontSize="30" fontWeight="900">
+                    {score}%
+                  </text>
+                  <text x="120" y="100" textAnchor="middle" fill="#9CA3AF" fontSize="9" fontWeight="800" letterSpacing="1.5">
+                    COMPLIANCE SCORE
+                  </text>
+                </svg>
+
+                {/* Big Bottom Percentage */}
+                <p className="text-3xl sm:text-4xl font-black text-[#D5FF3F] tracking-tight mt-1">
+                  {score} %
+                </p>
+              </div>
+            </section>
+
+            {/* Section 2: Statutory Test Case Boxes */}
+            <section className="space-y-3">
+              {checklistItems.map((item) => {
+                const iconConfig = getMandateConfig(item.mandate_id);
+                const Icon = iconConfig.icon;
                 const isViolation = item.status === 'VIOLATION';
                 const isWarning = item.status === 'WARNING';
-                const isCitationOpen = expandedCitationId === item.mandate_id;
-                const plainSummary = getPlainEnglishSummary(item);
-                const iconConfig = getMandateIconConfig(item.mandate_id);
-                const MandateIcon = iconConfig.icon;
+                const isExpanded = expandedMandateId === item.mandate_id;
 
                 return (
                   <div
                     key={item.mandate_id}
-                    className={`p-4 sm:p-5 rounded-xl border transition-all ${
+                    className={`rounded-2xl p-1.5 transition-all duration-200 ${
                       isViolation
-                        ? 'bg-rose-50/40 border-rose-300 border-l-4 border-l-rose-600 shadow-2xs'
-                        : isWarning
-                        ? 'bg-amber-50/40 border-amber-300 border-l-4 border-l-amber-500 shadow-2xs'
-                        : 'bg-zinc-50/70 border-zinc-200/90 hover:border-zinc-300 hover:bg-white'
+                        ? 'bg-[#131722] border-2 border-[#D5FF3F] shadow-[0_0_15px_rgba(213,255,63,0.35)]'
+                        : 'bg-[#131722] border border-black shadow-sm'
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-start gap-3.5 min-w-0">
-                        {/* Distinct Visual Category Icon */}
-                        <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 mt-0.5 shadow-2xs ${iconConfig.iconBg}`}>
-                          <MandateIcon className="w-5 h-5" />
-                        </div>
+                    {/* Inner White Card */}
+                    <div
+                      onClick={() => setExpandedMandateId(isExpanded ? null : item.mandate_id)}
+                      className="bg-white rounded-xl p-3 sm:p-3.5 flex items-center justify-between gap-3 cursor-pointer select-none transition-colors hover:bg-zinc-50/90"
+                    >
+                      {/* Left Icon Square */}
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${iconConfig.iconBg}`}>
+                        <Icon className="w-5 h-5" />
+                      </div>
 
-                        <div className="space-y-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h4 className="font-bold text-sm sm:text-base text-zinc-900">
-                              {item.name}
-                            </h4>
-                            <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-zinc-200/80 text-zinc-700 border border-zinc-300">
-                              {item.rule}
-                            </span>
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-100 text-zinc-500 border border-zinc-200">
-                              {iconConfig.category}
-                            </span>
-                          </div>
-
-                          {/* Plain English Finding */}
-                          <p className="text-xs sm:text-sm text-zinc-600 font-medium leading-relaxed">
-                            {plainSummary}
+                      {/* Middle Title & Rule Details */}
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-black text-sm text-zinc-900 leading-tight truncate">
+                          {iconConfig.title}
+                        </h4>
+                        {isViolation ? (
+                          <p className="font-mono text-[10px] font-black text-[#FF2A85] tracking-tight uppercase truncate mt-0.5">
+                            {item.reason ? `${item.reason.toUpperCase()}` : 'FONT SIZE VIOLATION DETECTED'}
                           </p>
-                        </div>
-                      </div>
-
-                      {/* Status Badge */}
-                      <span
-                        className={`px-3 py-1 rounded-md text-xs font-black shrink-0 ${
-                          item.status === 'COMPLIANT'
-                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                            : item.status === 'WARNING'
-                            ? 'bg-amber-100 text-amber-800 border border-amber-300'
-                            : 'bg-rose-100 text-rose-800 border border-rose-300 animate-pulse'
-                        }`}
-                      >
-                        {item.status === 'COMPLIANT' ? 'PASS' : item.status === 'WARNING' ? 'ADVISORY' : 'VIOLATION'}
-                      </span>
-                    </div>
-
-                    {/* Detected Content & Action Controls */}
-                    <div className="mt-3.5 pt-3 border-t border-zinc-200/80 flex flex-wrap items-center justify-between gap-3 text-xs">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-[11px] uppercase font-bold text-zinc-500 tracking-wider shrink-0">
-                          Detected on Packaging:
-                        </span>
-                        <span className="px-2.5 py-1 rounded-md bg-white text-zinc-800 border border-zinc-200 font-mono text-xs font-semibold truncate max-w-sm shadow-2xs">
-                          {item.extracted_text || '[NOT FOUND ON PACKAGING]'}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleSpotlight(item.mandate_id)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-zinc-100 text-zinc-700 hover:text-zinc-950 border border-zinc-200 font-medium text-xs transition-colors shadow-2xs"
-                        >
-                          <Eye className="w-3.5 h-3.5 text-zinc-500" />
-                          <span>Spotlight on Canvas</span>
-                        </button>
-
-                        <button
-                          onClick={() => setExpandedCitationId(isCitationOpen ? null : item.mandate_id)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-medium text-xs transition-colors shadow-2xs"
-                        >
-                          <BookOpen className="w-3.5 h-3.5 text-indigo-600" />
-                          <span>{isCitationOpen ? 'Hide Law Citation' : 'View Gazette Law'}</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Expandable Gazette Law Accordion */}
-                    {isCitationOpen && item.gazette_citation && (
-                      <div className="mt-3.5 p-4 bg-indigo-50/50 rounded-xl border border-indigo-200 space-y-2.5 text-xs text-zinc-800 animate-in fade-in duration-200">
-                        <div className="flex items-center justify-between font-bold text-indigo-900 text-xs">
-                          <span>Official Gazette Ref: {item.gazette_citation.gazette_ref || 'LMPC Rules 2011'}</span>
-                          <span className="font-mono bg-indigo-100 px-2 py-0.5 rounded text-[11px] border border-indigo-200 text-indigo-800">
-                            {item.gazette_citation.rule || item.rule}
-                          </span>
-                        </div>
-
-                        <p className="text-xs text-zinc-700 italic bg-white p-3 rounded-lg border border-indigo-100 leading-relaxed font-serif shadow-2xs">
-                          "{item.gazette_citation.verbatim_clause || item.gazette_citation.verbatim_text}"
-                        </p>
-
-                        {item.gazette_citation.officer_guidance && (
-                          <p className="text-xs text-zinc-700">
-                            <strong className="text-zinc-900">Enforcement Directive: </strong>
-                            {item.gazette_citation.officer_guidance}
+                        ) : isWarning ? (
+                          <p className="font-mono text-[10px] font-bold text-amber-500 tracking-tight uppercase truncate mt-0.5">
+                            ADVISORY: {item.reason ? item.reason.toUpperCase() : 'NON-PENAL ADVISORY'}
+                          </p>
+                        ) : (
+                          <p className="font-mono text-[10px] font-bold text-zinc-400 tracking-wider uppercase truncate mt-0.5">
+                            RULE: {item.rule ? item.rule.replace(/^Rule\s*/i, '') : iconConfig.defaultRule}
                           </p>
                         )}
+                      </div>
 
-                        <div className="pt-2 border-t border-indigo-100 flex items-center justify-between text-xs font-semibold text-zinc-700">
-                          <span>Statutory Sanction / Penalty:</span>
-                          <span className="font-bold text-rose-600 font-mono">
-                            {formatPenaltyText(item.gazette_citation?.penalty_rule)}
+                      {/* Right Status Badge */}
+                      <div className="flex flex-col items-center shrink-0 pl-1">
+                        {isViolation ? (
+                          <div className="w-6 h-6 rounded-full bg-[#FF2A85] text-white flex items-center justify-center shadow-xs">
+                            <X className="w-3.5 h-3.5 stroke-[3]" />
+                          </div>
+                        ) : isWarning ? (
+                          <div className="w-6 h-6 rounded-full bg-[#F59E0B] text-black flex items-center justify-center shadow-xs font-bold text-xs">
+                            !
+                          </div>
+                        ) : (
+                          <div className="w-6 h-6 rounded-full bg-[#D5FF3F] text-black flex items-center justify-center shadow-xs">
+                            <Check className="w-3.5 h-3.5 stroke-[3]" />
+                          </div>
+                        )}
+                        <span className="bg-[#131722] text-white text-[9px] font-black px-2 py-0.5 rounded tracking-wider text-center mt-1">
+                          {isViolation ? 'FAIL' : isWarning ? 'WARN' : 'PASS'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Expandable Statutory Details Drawer */}
+                    {isExpanded && (
+                      <div className="px-3 pt-3 pb-2.5 text-white text-xs space-y-2.5 animate-in fade-in duration-200">
+                        <div className="bg-white/10 rounded-lg p-2.5 space-y-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                            Detected On Packaging:
                           </span>
+                          <p className="font-mono text-xs text-white break-words">
+                            {item.extracted_text || '[NOT DETECTED ON LABEL]'}
+                          </p>
+                        </div>
+
+                        {item.gazette_citation && (
+                          <div className="bg-white/5 rounded-lg p-2.5 border border-white/10 space-y-1">
+                            <div className="flex items-center justify-between text-[10px] text-zinc-400 font-mono">
+                              <span>Ref: {item.gazette_citation.gazette_ref || 'LMPC Rules 2011'}</span>
+                              <span className="text-[#D5FF3F] font-bold">{item.gazette_citation.rule || item.rule}</span>
+                            </div>
+                            <p className="text-[11px] italic text-zinc-300 font-serif leading-relaxed">
+                              "{item.gazette_citation.verbatim_clause || item.gazette_citation.verbatim_text || item.reason}"
+                            </p>
+                            <p className="text-[10px] font-bold text-rose-400 pt-1 border-t border-white/10">
+                              Penalty: {formatPenaltyText(item.gazette_citation.penalty_rule)}
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-2 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => handleSpotlight(item.mandate_id)}
+                            className="flex-1 py-1.5 px-2.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold text-[11px] flex items-center justify-center gap-1.5 transition-colors"
+                          >
+                            <Eye className="w-3.5 h-3.5 text-[#D5FF3F]" />
+                            <span>Spotlight on Canvas</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setActiveTab('gazette')}
+                            className="py-1.5 px-2.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold text-[11px] flex items-center justify-center gap-1.5 transition-colors"
+                          >
+                            <BookOpen className="w-3.5 h-3.5 text-zinc-300" />
+                            <span>Full Gazette</span>
+                          </button>
                         </div>
                       </div>
                     )}
                   </div>
                 );
               })}
-            </div>
-          </section>
-        )}
+            </section>
 
-        {/* TAB B: Barcode, QR & Statutory Packaging Symbols */}
-        {activeTab === 'barcodes' && (
-          <div className="space-y-6">
-            <BarcodeSymbolsCard
-              barcode={report.barcode_data || report.label_data?.barcode_data}
-              qr={report.qr_data || report.label_data?.qr_data}
-              symbols={report.packaging_symbols || report.label_data?.packaging_symbols}
-            />
+            {/* Section 3: Nutrition Analysis */}
+            <section className="space-y-3">
+              {/* Header with Cyan Bar */}
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-5 bg-[#00E5FF] rounded-full inline-block" />
+                <h3 className="text-base sm:text-lg font-black text-[#12161A] tracking-tight">
+                  Nutrition Analysis
+                </h3>
+              </div>
+
+              {/* Dark Outer Container */}
+              <div className="bg-[#131722] rounded-3xl p-3 sm:p-4 border border-black shadow-lg">
+                {/* Inner White Card */}
+                <div className="bg-white rounded-2xl p-4 sm:p-5">
+                  
+                  {/* Chart Container with Y Axis */}
+                  <div className="relative h-60 flex">
+                    {/* Y Axis Numbers */}
+                    <div className="flex flex-col justify-between text-[10px] font-bold text-zinc-400 pr-2 select-none py-1 text-right w-7">
+                      <span>400</span>
+                      <span>300</span>
+                      <span>200</span>
+                      <span>100</span>
+                      <span>0</span>
+                    </div>
+
+                    {/* Grid lines & Bars container */}
+                    <div className="relative flex-1 border-l border-b border-zinc-200">
+                      {/* Horizontal Grid lines */}
+                      <div className="absolute inset-0 flex flex-col justify-between pointer-events-none py-1">
+                        <div className="w-full border-b border-zinc-100" />
+                        <div className="w-full border-b border-zinc-100" />
+                        <div className="w-full border-b border-zinc-100" />
+                        <div className="w-full border-b border-zinc-100" />
+                        <div className="w-full border-b border-transparent" />
+                      </div>
+
+                      {/* 5 Vertical Bars */}
+                      <div className="relative h-full flex items-end justify-between px-1.5 sm:px-3 pb-0">
+                        {/* Calories (Black bar) */}
+                        <div className="flex flex-col items-center w-9 sm:w-11">
+                          <div 
+                            className="w-full bg-[#12161A] border-2 border-black rounded-t flex items-center justify-center overflow-hidden transition-all duration-700"
+                            style={{ height: `${Math.min(205, (nutrition.calories / 500) * 205)}px` }}
+                          >
+                            <span className="text-white text-[10px] font-black -rotate-90 whitespace-nowrap tracking-wider select-none">
+                              {nutrition.calories}kcal
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Fat (Cyan bar) */}
+                        <div className="flex flex-col items-center w-9 sm:w-11">
+                          <span className="text-[10px] font-bold text-zinc-700 pb-1">
+                            {nutrition.fat}g
+                          </span>
+                          <div 
+                            className="w-full bg-[#00E5FF] border-2 border-black rounded-t transition-all duration-700"
+                            style={{ height: `${Math.max(12, Math.min(180, (nutrition.fat / 100) * 170))}px` }}
+                          />
+                        </div>
+
+                        {/* Carbs (Purple bar) */}
+                        <div className="flex flex-col items-center w-9 sm:w-11">
+                          <div 
+                            className="w-full bg-[#8B5CF6] border-2 border-black rounded-t flex items-center justify-center transition-all duration-700"
+                            style={{ height: `${Math.max(22, Math.min(180, (nutrition.carbs / 100) * 170))}px` }}
+                          >
+                            <span className="text-white text-[10px] font-black select-none">
+                              {nutrition.carbs}g
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Protein (Lime bar) */}
+                        <div className="flex flex-col items-center w-9 sm:w-11">
+                          <span className="text-[10px] font-bold text-zinc-700 pb-1">
+                            {nutrition.protein}g
+                          </span>
+                          <div 
+                            className="w-full bg-[#D5FF3F] border-2 border-black rounded-t transition-all duration-700"
+                            style={{ height: `${Math.max(10, Math.min(180, (nutrition.protein / 100) * 170))}px` }}
+                          />
+                        </div>
+
+                        {/* Sugar (Pink bar) */}
+                        <div className="flex flex-col items-center w-9 sm:w-11">
+                          <span className="text-[10px] font-bold text-zinc-700 pb-1">
+                            {nutrition.sugar}g
+                          </span>
+                          <div 
+                            className="w-full bg-[#FF2A85] border-2 border-black rounded-t transition-all duration-700"
+                            style={{ height: `${Math.max(16, Math.min(180, (nutrition.sugar / 100) * 170))}px` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* X Axis Labels */}
+                  <div className="flex justify-between pl-7 pr-1.5 sm:pr-3 pt-2 text-center text-xs font-bold text-zinc-900 select-none">
+                    <span className="w-9 sm:w-11">Calories</span>
+                    <span className="w-9 sm:w-11">Fat</span>
+                    <span className="w-9 sm:w-11">Carbs</span>
+                    <span className="w-9 sm:w-11">Protein</span>
+                    <span className="w-9 sm:w-11">Sugar</span>
+                  </div>
+
+                </div>
+              </div>
+            </section>
+
+            {/* Bottom Action: REPORT VIOLATION */}
+            <div className="pt-2 space-y-3 pb-6">
+              <button
+                onClick={onOpenComplaint ? onOpenComplaint : onOpenNotice}
+                className="w-full bg-[#131722] hover:bg-black text-white py-4 px-6 rounded-2xl font-black text-sm tracking-widest uppercase flex items-center justify-center gap-2.5 shadow-xl transition-all active:scale-[0.98] border border-zinc-800"
+              >
+                <span>REPORT VIOLATION</span>
+                <AlertCircle className="w-5 h-5 text-white" />
+              </button>
+
+              <div className="flex items-center justify-between gap-2">
+                <button
+                  onClick={onOpenNotice}
+                  className="flex-1 py-2.5 px-3 rounded-xl bg-white hover:bg-zinc-100 text-zinc-800 border border-zinc-300 font-bold text-xs text-center transition-colors shadow-2xs"
+                >
+                  {isLawful ? 'Compliance Certificate' : 'Rule 32 Legal Notice'}
+                </button>
+                {onRescan && (
+                  <button
+                    onClick={onRescan}
+                    className="py-2.5 px-4 rounded-xl bg-white hover:bg-zinc-100 text-zinc-800 border border-zinc-300 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 text-zinc-500" />
+                    <span>Rescan</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
           </div>
         )}
 
-        {/* TAB C: Packaging Spatial Canvas & OCR */}
+        {/* TAB B: SPATIAL CANVAS */}
         {activeTab === 'canvas' && (
-          <section className="space-y-6">
-            <div className="bg-white rounded-2xl p-6 sm:p-8 border border-zinc-200/90 shadow-sm space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
+          <div className="space-y-4 pb-8">
+            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-zinc-300 shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-black uppercase tracking-wider text-zinc-900">
-                    Interactive Packaging Canvas &amp; Token Zones
+                  <h3 className="font-black text-sm uppercase tracking-wider text-zinc-900">
+                    Spatial Canvas &amp; Packaging Tokens
                   </h3>
                   <p className="text-xs text-zinc-500">
-                    Click any highlighted token bounding box on the packaging to inspect its statutory declaration
+                    Click any highlighted token box to inspect statutory text
                   </p>
                 </div>
                 {selectedMandateId && (
@@ -931,12 +656,10 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
                 )}
               </div>
 
-              {/* Multi-Panel Image Switcher */}
+              {/* Multi-panel Switcher */}
               {report.additional_image_urls && report.additional_image_urls.length > 0 && (
-                <div className="flex items-center gap-2 mb-3 pb-2.5 border-b border-zinc-100 overflow-x-auto">
-                  <span className="text-[11px] font-bold text-zinc-500 shrink-0">
-                    Panels ({1 + report.additional_image_urls.length}):
-                  </span>
+                <div className="flex items-center gap-2 pt-1 border-t border-zinc-100 overflow-x-auto">
+                  <span className="text-[11px] font-bold text-zinc-500 shrink-0">Panels:</span>
                   {[report.image_url || '/presets/compliant_biscuit.svg', ...report.additional_image_urls].map((_, idx) => (
                     <button
                       key={idx}
@@ -944,11 +667,11 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
                       onClick={() => setSelectedPanelIndex(idx)}
                       className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
                         selectedPanelIndex === idx
-                          ? 'bg-rose-600 text-white shadow-2xs'
-                          : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 border border-zinc-200'
+                          ? 'bg-black text-white shadow-2xs'
+                          : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
                       }`}
                     >
-                      {idx === 0 ? 'Panel 1 (Front)' : idx === 1 ? 'Panel 2 (Back)' : `Panel ${idx + 1}`}
+                      {idx === 0 ? 'Panel 1' : `Panel ${idx + 1}`}
                     </button>
                   ))}
                 </div>
@@ -968,8 +691,8 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
             </div>
 
             {/* Raw OCR Text Box */}
-            <div className="bg-white rounded-2xl p-6 sm:p-8 border border-zinc-200/90 shadow-sm space-y-3">
-              <h4 className="text-sm font-black uppercase tracking-wider text-zinc-900">
+            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-zinc-300 shadow-sm space-y-2">
+              <h4 className="font-black text-xs uppercase tracking-wider text-zinc-900">
                 Raw Extracted OCR Text Stream
               </h4>
               <OCRRawTextViewer
@@ -977,36 +700,47 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
                 extractedFields={report.label_data}
               />
             </div>
-          </section>
+          </div>
         )}
 
-        {/* TAB D: Official Gazette Citations (38 Rules) */}
+        {/* TAB C: BARCODES & PACKAGING SYMBOLS */}
+        {activeTab === 'barcodes' && (
+          <div className="space-y-4 pb-8">
+            <BarcodeSymbolsCard
+              barcode={report.barcode_data || report.label_data?.barcode_data}
+              qr={report.qr_data || report.label_data?.qr_data}
+              symbols={report.packaging_symbols || report.label_data?.packaging_symbols}
+            />
+          </div>
+        )}
+
+        {/* TAB D: OFFICIAL GAZETTE CITATIONS */}
         {activeTab === 'gazette' && (
-          <section className="bg-white rounded-2xl p-6 sm:p-8 border border-zinc-200/90 shadow-sm space-y-4">
-            <div className="pb-3 border-b border-zinc-100">
-              <h3 className="text-sm font-black uppercase tracking-wider text-zinc-900">
-                Statutory Gazette Citations &amp; Legal Authorities
+          <div className="space-y-4 pb-8">
+            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-zinc-300 shadow-sm space-y-2">
+              <h3 className="font-black text-sm uppercase tracking-wider text-zinc-900">
+                Statutory Gazette Citations
               </h3>
-              <p className="text-xs text-zinc-500 mt-0.5">
-                Every citation is retrieved from the 38 statutory rules of the Legal Metrology (Packaged Commodities) Rules, 2011
+              <p className="text-xs text-zinc-500">
+                Rules under Legal Metrology (Packaged Commodities) Rules, 2011 &amp; amendments
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-              {(report.checklist || []).map((item) => (
-                <div key={item.mandate_id} className="p-4 rounded-xl bg-zinc-50 border border-zinc-200/80 space-y-2 shadow-2xs">
+            <div className="space-y-3">
+              {checklistItems.map((item) => (
+                <div key={item.mandate_id} className="p-4 rounded-xl bg-white border border-zinc-300 space-y-2 shadow-2xs">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-sm text-zinc-900">{item.name}</span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-white text-zinc-700 border border-zinc-200">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-zinc-100 text-zinc-800 border border-zinc-200">
                       {item.rule}
                     </span>
                   </div>
 
-                  <p className="text-xs text-zinc-700 italic bg-white p-3 rounded-lg border border-zinc-200 leading-relaxed font-serif shadow-2xs">
+                  <p className="text-xs text-zinc-700 italic bg-zinc-50 p-3 rounded-lg border border-zinc-200 leading-relaxed font-serif">
                     "{item.gazette_citation?.verbatim_clause || item.gazette_citation?.verbatim_text || item.reason}"
                   </p>
 
-                  <div className="text-[11px] flex items-center justify-between text-zinc-500 font-medium">
+                  <div className="text-[11px] flex items-center justify-between text-zinc-500 font-medium pt-1">
                     <span>Gazette Ref: {item.gazette_citation?.gazette_ref || 'LMPC Rules 2011'}</span>
                     <span className="font-bold text-rose-600 font-mono">
                       {formatPenaltyText(item.gazette_citation?.penalty_rule)}
@@ -1015,48 +749,10 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
                 </div>
               ))}
             </div>
-          </section>
+          </div>
         )}
 
-      </main>
-
-      {/* Sticky Bottom Actions Bar */}
-      <footer className="sticky bottom-0 z-40 bg-white/95 backdrop-blur-md border-t border-zinc-200/90 px-4 sm:px-8 py-3.5 shadow-md">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          <button
-            onClick={onClose}
-            className="px-4 sm:px-5 py-2.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-700 hover:text-zinc-950 border border-zinc-200 font-semibold text-xs transition-colors shadow-2xs"
-          >
-            Close Full Report
-          </button>
-
-          <div className="flex items-center gap-2 sm:gap-3">
-            {onOpenComplaint && (
-              <button
-                onClick={onOpenComplaint}
-                className="px-4 sm:px-5 py-2.5 rounded-xl font-black text-xs flex items-center gap-2 shadow-sm transition-all active:scale-95 bg-[#FF2A85] hover:bg-[#e0246f] text-white"
-              >
-                <Flag className="w-4 h-4" />
-                <span className="hidden sm:inline">File Govt Complaint</span>
-                <span className="sm:hidden">Complaint</span>
-              </button>
-            )}
-            <button
-              onClick={onOpenNotice}
-              className={`px-4 sm:px-6 py-2.5 rounded-xl font-black text-xs flex items-center gap-2 shadow-sm transition-all active:scale-95 ${
-                isLawful
-                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
-                  : 'bg-rose-600 hover:bg-rose-500 text-white'
-              }`}
-            >
-              <FileText className="w-4 h-4" />
-              <span>
-                {isLawful ? 'Compliance Certificate' : 'Issue Notice'}
-              </span>
-            </button>
-          </div>
-        </div>
-      </footer>
+      </div>
     </div>
   );
 };
