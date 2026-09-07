@@ -40,3 +40,4 @@ lerna-debug.log*
 # Gazette raw PDF archive (large binaries)
 docs/official_gazettes/*.pdf
 backend/app/rag/extracted_gazettes.json
+.env*
