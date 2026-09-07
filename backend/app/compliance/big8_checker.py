@@ -251,6 +251,14 @@ class Big8Checker:
 
         # 5. Date of Manufacture / Packing (Rule 6(1)(e))
         mfg_date = label_data.get("mfg_date", "")
+        # Fallback check across expiry_date or raw text / coding area if mfg_date is missing or contains batch info
+        if not mfg_date:
+            raw_text_scan = label_data.get("raw_text", "") or label_data.get("expiry_date", "")
+            if raw_text_scan:
+                coding_stamp_match = re.search(r'\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\/\s\.\-]+(20\d{2}|\d{2})\b', raw_text_scan, re.IGNORECASE)
+                if coding_stamp_match:
+                    mfg_date = coding_stamp_match.group(0)
+
         date_audit = DeterministicMathEngine.verify_date_format(mfg_date)
         if date_audit["status"] == "VIOLATION":
             results.append({
@@ -277,12 +285,13 @@ class Big8Checker:
             })
             warnings_count += 1
         else:
+            matched_display = date_audit.get("matched_date", mfg_date)
             results.append({
                 "mandate_id": "mfg_date",
                 "name": "Date of Manufacture / Packing",
                 "rule": "Rule 6(1)(e)",
                 "status": "COMPLIANT",
-                "extracted_text": mfg_date,
+                "extracted_text": matched_display,
                 "reason": date_audit["reason"],
                 "severity": "LOW",
                 "citation_key": "rule_6_1_e"
@@ -333,10 +342,16 @@ class Big8Checker:
             compliant_count += 1
 
         # 7. Consumer Care Details (Rule 6(1)(h))
-        care_phone = label_data.get("consumer_care_phone", "")
-        care_email = label_data.get("consumer_care_email", "")
-        has_phone = bool(re.search(r'[\d\-\+\(\)]{7,}', care_phone))
+        care_phone = str(label_data.get("consumer_care_phone", "") or "")
+        care_email = str(label_data.get("consumer_care_email", "") or "")
+        
+        # Strip non-digits to verify at least 7-11 digits (e.g. 1800 103 1947 or standard landlines/mobiles)
+        phone_digits = re.sub(r'\D', '', care_phone)
+        has_phone = len(phone_digits) >= 7 or bool(re.search(r'[\d\s\-\+\(\)]{7,}', care_phone) and len(re.findall(r'\d', care_phone)) >= 7)
         has_email = bool(re.search(r'[\w\.-]+@[\w\.-]+\.\w+', care_email))
+
+        clean_display_phone = re.sub(r'^(?:phone|tel|call|care|contact)?\s*[:\.\-]?\s*', '', care_phone, flags=re.IGNORECASE).strip()
+        clean_display_email = re.sub(r'^(?:email|mail)?\s*[:\.\-]?\s*', '', care_email, flags=re.IGNORECASE).strip()
 
         if not has_phone and not has_email:
             results.append({
@@ -357,7 +372,7 @@ class Big8Checker:
                 "name": "Consumer Care Details",
                 "rule": "Rule 6(1)(h)",
                 "status": "WARNING",
-                "extracted_text": f"Phone: {care_phone or 'Missing'} | Email: {care_email or 'Missing'}",
+                "extracted_text": f"Phone: {clean_display_phone or 'Missing'} | Email: {clean_display_email or 'Missing'}",
                 "reason": f"Rule 6(1)(h) mandates both telephone and email. Missing {missing_item}.",
                 "severity": "MEDIUM",
                 "citation_key": "rule_6_1_h"
@@ -369,8 +384,8 @@ class Big8Checker:
                 "name": "Consumer Care Details",
                 "rule": "Rule 6(1)(h)",
                 "status": "COMPLIANT",
-                "extracted_text": f"Tel: {care_phone} | Email: {care_email}",
-                "reason": "Complete contact details for consumer redressal declared.",
+                "extracted_text": f"Tel: {clean_display_phone} | Email: {clean_display_email}",
+                "reason": "Complete contact details for consumer redressal declared (verified phone helpline and email).",
                 "severity": "LOW",
                 "citation_key": "rule_6_1_h"
             })

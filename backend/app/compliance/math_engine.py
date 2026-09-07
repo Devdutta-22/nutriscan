@@ -218,19 +218,22 @@ class DeterministicMathEngine:
             }
         
         clean = date_str.strip()
-        # Check standard formats
+        # Check standard formats (both exact and embedded in coding/batch strings)
         patterns = [
-            r'^(0[1-9]|1[0-2])[\/\-](20\d{2}|\d{2})$',                    # 03/2024 or 03/24
-            r'^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\s\.\-]+(20\d{2}|\d{2})$', # March 2024
-            r'^(0[1-9]|[12]\d|3[01])[\/\-](0[1-9]|1[0-2])[\/\-](20\d{2}|\d{2})$' # 15/03/2024
+            r'\b(0[1-9]|[12]\d|3[01])[\/\-](0[1-9]|1[0-2])[\/\-](20\d{2}|\d{2})\b', # DD/MM/YYYY or DD-MM-YY
+            r'\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\/\s\.\-]+(20\d{2}|\d{2})\b', # JUL/26, March 2024, JUL-26
+            r'\b(0[1-9]|1[0-2])[\/\-](20\d{2}|\d{2})\b', # 03/2024 or 03/24
         ]
         
         for pat in patterns:
-            if re.search(pat, clean, re.IGNORECASE):
+            m = re.search(pat, clean, re.IGNORECASE)
+            if m:
+                matched_date = m.group(0)
                 return {
                     "is_valid": True,
                     "status": "COMPLIANT",
-                    "reason": f"Valid date declaration matching Rule 6(1)(e): '{clean}'"
+                    "reason": f"Valid date declaration matching Rule 6(1)(e): '{matched_date}'",
+                    "matched_date": matched_date
                 }
 
         return {
@@ -238,3 +241,4 @@ class DeterministicMathEngine:
             "status": "WARNING",
             "reason": f"Ambiguous date format '{clean}'. Rule 6(1)(e) specifies Month & Year must be unambiguous."
         }
+

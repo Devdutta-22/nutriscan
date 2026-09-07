@@ -33,10 +33,13 @@ COMPLIANCE_SYSTEM_PROMPT = """You are a Senior Legal Metrology Inspector appoint
 CRITICAL INSTRUCTIONS:
 1. Your ONLY source of truth is the STATUTORY RULES provided below. Do NOT cite any rule, section, or provision not present in the retrieved context.
 2. Do NOT hallucinate or fabricate rule numbers, gazette references, or penalty amounts.
-3. For each mandatory declaration, analyze whether the extracted label data satisfies the statutory requirement.
-4. Use precise legal terminology from the rules.
-5. If a field is missing or ambiguous, classify it as a VIOLATION or WARNING with the specific rule reference.
-6. Always include the applicable penalty provision.
+3. STATUTORY EXEMPTION RULE 26(a): Under Rule 26(a) of Legal Metrology (Packaged Commodities) Rules, 2011, small packages containing net weight/measure of 10g or 10ml or less (except tobacco and pan masala) are statutory exemptions from Chapter II declarations. Do NOT flag small sachets (<=10g, e.g., 6g spice sachet) as violations for declarations exempted under Rule 26(a).
+4. DATE & BATCH CODING: Look for manufacturing/packaging date and use-by/expiry dates on margin seals, inkjet stamps, and coding areas (e.g., 'JUL/26', '07/26', 'JUL/26-MAR/27'). If a date is declared anywhere on the package or coding area, mark as COMPLIANT.
+5. CONSUMER REDRESSAL: If a phone number (e.g. toll-free '1800 103 1947') and email (e.g. 'wecare@in.nestle.com') are both provided, consumer care is COMPLIANT under Rule 6(1)(h). Spaces in phone numbers are standard formatting.
+6. For each mandatory declaration, analyze whether the extracted label data satisfies the statutory requirement.
+7. Use precise legal terminology from the rules.
+8. If a field is missing or ambiguous, classify it as a VIOLATION or WARNING with the specific rule reference.
+9. Always include the applicable penalty provision.
 
 OUTPUT FORMAT: You must respond with valid JSON matching the schema below. No markdown, no explanation outside the JSON.
 """
@@ -282,12 +285,12 @@ Transcribe and extract the following exact fields if present on the label:
 - net_quantity: The declared net quantity or weight in SI units (e.g., '200 g', '100 ml', '1 N'). Do NOT use 'per 100g' from the nutrition table.
 - mrp: Maximum retail price (e.g., 'Rs. 55.00' or '₹55.00 (INCL. OF ALL TAXES)').
 - unit_sale_price: Unit sale price if printed (e.g., 'Rs. 0.28 per g' or '₹0.28 / g').
-- mfg_date: Date/month of packaging, manufacture, or import (e.g., '09/08/2026', 'AUG 2026').
-- expiry_date: Best before date, expiry date, or use-by date (e.g., 'Best Before 6 Months', '2027-01-05').
+- mfg_date: Date/month of packaging, manufacture, or import (e.g., '09/08/2026', 'AUG 2026', 'JUL/26'). Look closely at the coding area, margin seal, inkjet/dot-matrix stamp (e.g., in strings like 'JUL/26-MAR/27' or 'MFD. JUL/26', extract 'JUL/26').
+- expiry_date: Best before date, expiry date, or use-by date (e.g., 'Best Before 6 Months', 'MAR/27', '2027-01-05'). If coding stamp says 'JUL/26-MAR/27', extract 'MAR/27'.
 - manufacturer_address: Complete name and address of manufacturer, packer, or marketer, including PIN code.
 - importer_address: Complete name and address of Indian importer if imported product.
-- consumer_care_phone: Helpline or customer care phone number.
-- consumer_care_email: Official customer care email address.
+- consumer_care_phone: Helpline or customer care phone number (e.g., '1800 103 1947'). Do not omit if separated by spaces.
+- consumer_care_email: Official customer care email address (e.g., 'wecare@in.nestle.com').
 - country_of_origin: Declared country of manufacture/origin (e.g., 'India', 'Malaysia').
 - language_detected: Primary language of printed text (e.g., 'English', 'Hindi').
 - mrp_values: List of distinct MRP prices if more than one is printed on the package.
@@ -390,12 +393,12 @@ Combine and transcribe all visible statutory declarations and packaging symbols 
 - net_quantity: The declared net quantity or weight in standard metric SI units (e.g., '200 g', '100 ml', '1 N'). Do NOT use 'per 100g' from the nutrition table.
 - mrp: Maximum retail price (e.g., 'Rs. 55.00' or '₹55.00 (INCL. OF ALL TAXES)').
 - unit_sale_price: Unit sale price if printed (e.g., 'Rs. 0.28 per g' or '₹0.28 / g').
-- mfg_date: Date/month of packaging, manufacture, or import (e.g., '09/08/2026', 'AUG 2026').
-- expiry_date: Best before date, expiry date, or use-by period (e.g., 'Best Before 6 Months', '2027-01-05').
+- mfg_date: Date/month of packaging, manufacture, or import (e.g., '09/08/2026', 'AUG 2026', 'JUL/26'). Look closely at the coding area, margin seal, inkjet/dot-matrix stamp (e.g., in strings like 'JUL/26-MAR/27' or 'MFD. JUL/26', extract 'JUL/26').
+- expiry_date: Best before date, expiry date, or use-by period (e.g., 'Best Before 6 Months', 'MAR/27', '2027-01-05'). If coding stamp says 'JUL/26-MAR/27', extract 'MAR/27'.
 - manufacturer_address: Complete name and address of manufacturer, packer, or marketer, including 6-digit postal PIN code.
 - importer_address: Complete name and address of registered Indian importer with PIN code (if imported product).
-- consumer_care_phone: Helpline or customer service phone/telephone number.
-- consumer_care_email: Official customer care email address.
+- consumer_care_phone: Helpline or customer service phone/telephone number (e.g., '1800 103 1947'). Do not omit if separated by spaces.
+- consumer_care_email: Official customer care email address (e.g., 'wecare@in.nestle.com').
 - country_of_origin: Declared country of origin/manufacture (e.g., 'India', 'Malaysia').
 - language_detected: Primary language of printed statutory declarations (e.g., 'English', 'Hindi').
 - mrp_values: List of all distinct MRP prices printed across any of the panels.

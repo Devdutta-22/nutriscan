@@ -201,6 +201,17 @@ export class ClientOCREngine {
     );
     if (dateMatch) {
       fields.mfg_date = dateMatch[1].trim();
+    } else {
+      // Look for coding area inkjet/dot-matrix stamps (e.g. JUL/26-MAR/27 or standalone JUL/26 or 03/24)
+      const codingStampMatch = text.match(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\/\s\.\-]+(20\d{2}|\d{2})\b/i);
+      if (codingStampMatch) {
+        fields.mfg_date = codingStampMatch[0].trim();
+      } else {
+        const slashMonthMatch = text.match(/\b(0[1-9]|1[0-2])[\/\-](20\d{2}|\d{2})\b/);
+        if (slashMonthMatch) {
+          fields.mfg_date = slashMonthMatch[0].trim();
+        }
+      }
     }
 
     // 6. Consumer Care Phone & Email
@@ -208,9 +219,10 @@ export class ClientOCREngine {
       /(?:care|call|help|tel|phone|contact)?\s*[:\.\-]?\s*(\+?91[\-\s]?)?([1][8][0][0][\-\s]?\d{3}[\-\s]?\d{4}|\d{10}|\d{3,5}[\-\s]\d{6,8})/i
     );
     if (phoneMatch) {
-      const cleanPhone = phoneMatch[0].replace(/[^0-9\+\-]/g, '').trim();
-      if (cleanPhone.length >= 8) {
-        fields.consumer_care_phone = cleanPhone;
+      // Normalize phone while preserving standard readability or extracting digits
+      const digitsOnly = phoneMatch[0].replace(/\D/g, '');
+      if (digitsOnly.length >= 8) {
+        fields.consumer_care_phone = phoneMatch[0].replace(/^(?:care|call|help|tel|phone|contact)\s*[:\.\-]?\s*/i, '').trim();
       }
     }
 
