@@ -37,6 +37,35 @@ class Big8Checker:
         compliant_count = 0
         critical_count = 0
 
+        # Rule 26(a) Small Package Statutory Exemption Evaluation
+        raw_net_qty = label_data.get("net_quantity", "")
+        parsed_qty = DeterministicMathEngine.parse_quantity(raw_net_qty)
+        
+        text_corpus = f"{label_data.get('generic_name', '')} {label_data.get('product_name', '')} {label_data.get('raw_text', '')} {label_data.get('product_category', '')}".lower()
+        
+        confectionery_keywords = [
+            "chewing gum", "bubble gum", "toffee", "candy", "candies",
+            "eclair", "eclairs", "mint", "mints", "lozenge", "lozenges",
+            "lollipop", "lollypop", "sugar cube", "single piece", "chocobite",
+            "liquid filled chewing gum", "center fresh", "center fruit", "pulse candy",
+            "alpenliebe", "happydent", "mentos", "boomer", "orbit", "clorets"
+        ]
+        
+        tobacco_pan_masala_keywords = [
+            "pan masala", "gutkha", "khaini", "tobacco", "zarda", "bidi", "beedi",
+            "cigarette", "cigar", "chewing tobacco", "snuff"
+        ]
+        is_tobacco_or_pan_masala = any(k in text_corpus for k in tobacco_pan_masala_keywords)
+        
+        is_declared_under_10 = bool(
+            parsed_qty and 
+            parsed_qty[1] in ['g', 'gm', 'gms', 'gram', 'grams', 'ml', 'mls', 'millilitre', 'millilitres'] and 
+            parsed_qty[0] <= 10.0
+        )
+        is_single_confectionery = any(k in text_corpus for k in confectionery_keywords) and not is_tobacco_or_pan_masala
+        
+        is_small_pack_exempt = (is_declared_under_10 or is_single_confectionery) and not is_tobacco_or_pan_masala
+
         # 1. Manufacturer / Importer Address (Rule 6(1)(a))
         mfg_val = label_data.get("manufacturer_address", "")
         importer_val = label_data.get("importer_address", "")
@@ -155,7 +184,19 @@ class Big8Checker:
         prohibited_qualifiers = ['approx', 'approximately', 'minimum', 'min.', 'when packed', 'average']
         has_prohibited = any(q in str(net_qty).lower() for q in prohibited_qualifiers)
 
-        if not parsed_qty:
+        if is_small_pack_exempt and (not parsed_qty or parsed_qty[0] <= 10.0):
+            results.append({
+                "mandate_id": "net_quantity",
+                "name": "Net Quantity",
+                "rule": "Rule 6(1)(c)",
+                "status": "COMPLIANT",
+                "extracted_text": net_qty or "Exempt (≤ 10g)",
+                "reason": "Statutorily exempt from net quantity declaration on individual wrapper under Rule 26(a) of LMPC Rules 2011 (commodity ≤ 10g). Quantity is declared on master container/dispenser jar.",
+                "severity": "LOW",
+                "citation_key": "rule_26_a"
+            })
+            compliant_count += 1
+        elif not parsed_qty:
             results.append({
                 "mandate_id": "net_quantity",
                 "name": "Net Quantity",
@@ -195,7 +236,19 @@ class Big8Checker:
         # 4. Maximum Retail Price (Rule 6(1)(d))
         mrp = label_data.get("mrp", "")
         parsed_mrp = DeterministicMathEngine.parse_price(mrp)
-        if not parsed_mrp:
+        if is_small_pack_exempt and not parsed_mrp:
+            results.append({
+                "mandate_id": "mrp",
+                "name": "Maximum Retail Price (MRP)",
+                "rule": "Rule 6(1)(d)",
+                "status": "COMPLIANT",
+                "extracted_text": mrp or "Exempt (≤ 10g)",
+                "reason": "Statutorily exempt from MRP declaration on individual unit under Rule 26(a) of LMPC Rules 2011 (Net weight ≤ 10g/10ml). Retail price is governed by master container under Rule 18(1).",
+                "severity": "LOW",
+                "citation_key": "rule_26_a"
+            })
+            compliant_count += 1
+        elif not parsed_mrp:
             results.append({
                 "mandate_id": "mrp",
                 "name": "Maximum Retail Price (MRP)",
@@ -260,7 +313,19 @@ class Big8Checker:
                     mfg_date = coding_stamp_match.group(0)
 
         date_audit = DeterministicMathEngine.verify_date_format(mfg_date)
-        if date_audit["status"] == "VIOLATION":
+        if is_small_pack_exempt and (date_audit["status"] == "VIOLATION" or not mfg_date):
+            results.append({
+                "mandate_id": "mfg_date",
+                "name": "Date of Manufacture / Packing",
+                "rule": "Rule 6(1)(e)",
+                "status": "COMPLIANT",
+                "extracted_text": mfg_date or "Exempt (≤ 10g)",
+                "reason": "Statutorily exempt from Date of Packaging on individual piece under Rule 26(a). Batch & mfg details apply to master container.",
+                "severity": "LOW",
+                "citation_key": "rule_26_a"
+            })
+            compliant_count += 1
+        elif date_audit["status"] == "VIOLATION":
             results.append({
                 "mandate_id": "mfg_date",
                 "name": "Date of Manufacture / Packing",
@@ -300,59 +365,80 @@ class Big8Checker:
 
         # 6. Unit Sale Price (Rule 6(1)(s) - 2024 Amendment)
         usp_str = label_data.get("unit_sale_price", "")
-        usp_verification = DeterministicMathEngine.verify_usp(mrp, net_qty, usp_str)
-        if usp_verification["status"] == "VIOLATION":
-            results.append({
-                "mandate_id": "usp",
-                "name": "Unit Sale Price (USP)",
-                "rule": "Rule 6(1)(s)",
-                "status": "VIOLATION",
-                "extracted_text": usp_str or "Missing",
-                "reason": usp_verification["reason"],
-                "severity": "HIGH",
-                "details": usp_verification,
-                "citation_key": "rule_6_1_s"
-            })
-            violations_count += 1
-        elif usp_verification["status"] == "WARNING":
-            results.append({
-                "mandate_id": "usp",
-                "name": "Unit Sale Price (USP)",
-                "rule": "Rule 6(1)(s)",
-                "status": "WARNING",
-                "extracted_text": usp_str,
-                "reason": usp_verification["reason"],
-                "severity": "MEDIUM",
-                "details": usp_verification,
-                "citation_key": "rule_6_1_s"
-            })
-            warnings_count += 1
-        elif usp_verification["status"] == "ERROR":
-            results.append({
-                "mandate_id": "usp",
-                "name": "Unit Sale Price (USP)",
-                "rule": "Rule 6(1)(s)",
-                "status": "VIOLATION",
-                "extracted_text": usp_str or "Missing",
-                "reason": "MRP and/or Net Quantity are missing from label; statutory Unit Sale Price (USP) cannot be computed or verified.",
-                "severity": "HIGH",
-                "details": usp_verification,
-                "citation_key": "rule_6_1_s"
-            })
-            violations_count += 1
-        else:
+        if is_small_pack_exempt:
+            usp_verification = {
+                "status": "COMPLIANT",
+                "is_valid": True,
+                "reason": "Statutorily exempt from Unit Sale Price (USP) under Rule 26(a) and Rule 6(11) (Package ≤ 10g/10ml).",
+                "statutory_rule": "Rule 26(a)",
+                "printed": usp_str or "Exempt (≤ 10g)"
+            }
             results.append({
                 "mandate_id": "usp",
                 "name": "Unit Sale Price (USP)",
                 "rule": "Rule 6(1)(s)",
                 "status": "COMPLIANT",
-                "extracted_text": usp_verification.get("printed", usp_str),
-                "reason": usp_verification["reason"],
+                "extracted_text": usp_str or "Exempt (≤ 10g)",
+                "reason": "Statutorily exempt from Unit Sale Price (USP) under Rule 26(a) and Rule 6(11) (Package ≤ 10g/10ml).",
                 "severity": "LOW",
                 "details": usp_verification,
-                "citation_key": "rule_6_1_s"
+                "citation_key": "rule_26_a"
             })
             compliant_count += 1
+        else:
+            usp_verification = DeterministicMathEngine.verify_usp(mrp, net_qty, usp_str)
+            if usp_verification["status"] == "VIOLATION":
+                results.append({
+                    "mandate_id": "usp",
+                    "name": "Unit Sale Price (USP)",
+                    "rule": "Rule 6(1)(s)",
+                    "status": "VIOLATION",
+                    "extracted_text": usp_str or "Missing",
+                    "reason": usp_verification["reason"],
+                    "severity": "HIGH",
+                    "details": usp_verification,
+                    "citation_key": "rule_6_1_s"
+                })
+                violations_count += 1
+            elif usp_verification["status"] == "WARNING":
+                results.append({
+                    "mandate_id": "usp",
+                    "name": "Unit Sale Price (USP)",
+                    "rule": "Rule 6(1)(s)",
+                    "status": "WARNING",
+                    "extracted_text": usp_str,
+                    "reason": usp_verification["reason"],
+                    "severity": "MEDIUM",
+                    "details": usp_verification,
+                    "citation_key": "rule_6_1_s"
+                })
+                warnings_count += 1
+            elif usp_verification["status"] == "ERROR":
+                results.append({
+                    "mandate_id": "usp",
+                    "name": "Unit Sale Price (USP)",
+                    "rule": "Rule 6(1)(s)",
+                    "status": "VIOLATION",
+                    "extracted_text": usp_str or "Missing",
+                    "reason": "MRP and/or Net Quantity are missing from label; statutory Unit Sale Price (USP) cannot be computed or verified.",
+                    "severity": "HIGH",
+                    "details": usp_verification,
+                    "citation_key": "rule_6_1_s"
+                })
+                violations_count += 1
+            else:
+                results.append({
+                    "mandate_id": "usp",
+                    "name": "Unit Sale Price (USP)",
+                    "rule": "Rule 6(1)(s)",
+                    "status": "COMPLIANT",
+                    "extracted_text": usp_verification.get("printed", usp_str),
+                    "reason": usp_verification["reason"],
+                    "severity": "LOW",
+                    "details": usp_verification,
+                    "citation_key": "rule_6_1_s"
+                })
+                compliant_count += 1
 
         # 7. Consumer Care Details (Rule 6(1)(h))
         care_phone = str(label_data.get("consumer_care_phone", "") or "")
@@ -366,7 +452,19 @@ class Big8Checker:
         clean_display_phone = re.sub(r'^(?:phone|tel|call|care|contact)?\s*[:\.\-]?\s*', '', care_phone, flags=re.IGNORECASE).strip()
         clean_display_email = re.sub(r'^(?:email|mail)?\s*[:\.\-]?\s*', '', care_email, flags=re.IGNORECASE).strip()
 
-        if not has_phone and not has_email:
+        if is_small_pack_exempt and (not has_phone and not has_email):
+            results.append({
+                "mandate_id": "consumer_care",
+                "name": "Consumer Care Details",
+                "rule": "Rule 6(1)(h)",
+                "status": "COMPLIANT",
+                "extracted_text": (clean_display_phone or clean_display_email) or "Exempt (≤ 10g)",
+                "reason": "Statutorily exempt from consumer helpline declaration on small wrapper under Rule 26(a). Consumer care details declared on master pack.",
+                "severity": "LOW",
+                "citation_key": "rule_26_a"
+            })
+            compliant_count += 1
+        elif not has_phone and not has_email:
             results.append({
                 "mandate_id": "consumer_care",
                 "name": "Consumer Care Details",
@@ -492,7 +590,19 @@ class Big8Checker:
         perishable_keywords = ['food', 'perishable', 'beverage', 'edible', 'dairy', 'meat', 'bakery']
         is_perishable = any(kw in product_cat for kw in perishable_keywords)
 
-        if expiry:
+        if is_small_pack_exempt and not expiry:
+            results.append({
+                "mandate_id": "best_before",
+                "name": "Best Before / Expiry Date",
+                "rule": "Rule 6(1)(f)",
+                "status": "COMPLIANT",
+                "extracted_text": "Exempt (≤ 10g)",
+                "reason": "Statutorily exempt from expiry date on individual small unit under Rule 26(a). Best before/expiry declared on master wholesale container.",
+                "severity": "LOW",
+                "citation_key": "rule_26_a"
+            })
+            compliant_count += 1
+        elif expiry:
             results.append({
                 "mandate_id": "best_before",
                 "name": "Best Before / Expiry Date",
@@ -604,19 +714,7 @@ class Big8Checker:
                 "rule": "Rule 18(2A)",
                 "status": "VIOLATION",
                 "extracted_text": ", ".join(map(str, mrp_values)),
-                "reason": "Multiple distinct MRP values detected on the same package (Dual MRP).",
-                "severity": "HIGH",
-                "citation_key": "rule_18_2a"
-            })
-            violations_count += 1
-        elif not mrp and (not mrp_values or len(mrp_values) == 0):
-            results.append({
-                "mandate_id": "dual_mrp",
-                "name": "Dual MRP Detection",
-                "rule": "Rule 18(2A)",
-                "status": "VIOLATION",
-                "extracted_text": "No MRP detected",
-                "reason": "No Maximum Retail Price (MRP) found on packaging to verify pricing compliance.",
+                "reason": "Multiple distinct MRP values detected on the same package (Dual MRP prohibition under Rule 18(2A)).",
                 "severity": "HIGH",
                 "citation_key": "rule_18_2a"
             })
@@ -627,8 +725,8 @@ class Big8Checker:
                 "name": "Dual MRP Detection",
                 "rule": "Rule 18(2A)",
                 "status": "COMPLIANT",
-                "extracted_text": str(mrp_values) if mrp_values else mrp,
-                "reason": "Uniform single pricing verified.",
+                "extracted_text": str(mrp_values[0]) if (isinstance(mrp_values, list) and len(mrp_values) == 1) else (mrp or "Uniform pricing"),
+                "reason": "Uniform single pricing verified. No dual pricing detected on package (Rule 18(2A)).",
                 "severity": "LOW",
                 "citation_key": "rule_18_2a"
             })
@@ -642,13 +740,16 @@ class Big8Checker:
         return {
             "compliance_score": compliance_score,
             "checklist": results,
+            "is_small_pack_exempt": is_small_pack_exempt,
             "summary": {
                 "total_mandates": len(cls.MANDATES),
                 "compliant": compliant_count,
                 "warnings": warnings_count,
                 "violations": violations_count,
                 "critical": critical_count,
-                "is_lawful_for_sale": violations_count == 0
+                "is_lawful_for_sale": violations_count == 0,
+                "is_small_pack_exempt": is_small_pack_exempt,
+                "exemption_rule": "Rule 26(a)" if is_small_pack_exempt else None
             },
             "usp_verification": usp_verification,
             "barcode_data": label_data.get("barcode_data"),

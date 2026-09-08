@@ -189,12 +189,17 @@ class AuditSynthesizer:
             else:
                 compliant_count += 1
                 
+        is_small_pack = big8_result.get("is_small_pack_exempt", False)
+
         if violations_count > 0:
             legal_status = "NON_COMPLIANT_VIOLATION"
             status_text = "Violation of Rule 32 of LMPC Rules, 2011"
         elif warnings_count > 0:
             legal_status = "COMPLIANT_WITH_WARNINGS"
             status_text = "Compliant but with warnings related to LMPC Rules"
+        elif is_small_pack:
+            legal_status = "FULLY_COMPLIANT"
+            status_text = "Statutorily Exempt under Rule 26(a) (Net Qty ≤ 10g). All applicable small-pack requirements met."
         else:
             legal_status = "FULLY_COMPLIANT"
             status_text = "Fully Compliant with Rule 32 of LMPC Rules, 2011"
@@ -219,12 +224,15 @@ class AuditSynthesizer:
             "compliance_score": score,
             "corpus_version": corpus_version,
             "llm_enhanced": bool(gemini_result),
+            "is_small_pack_exempt": is_small_pack,
             "summary": {
                 "total_mandates_checked": len(enriched_checklist),
                 "compliant_count": compliant_count,
                 "warnings_count": warnings_count,
                 "violations_count": violations_count,
-                "is_lawful_for_sale": violations_count == 0
+                "is_lawful_for_sale": violations_count == 0,
+                "is_small_pack_exempt": is_small_pack,
+                "exemption_rule": "Rule 26(a) - Small Package Exemption (≤ 10g)" if is_small_pack else None
             },
             "checklist": enriched_checklist,
             "usp_verification": big8_result.get("usp_verification", {}),

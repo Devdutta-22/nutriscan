@@ -41,11 +41,13 @@ export class NoticeGenerator {
     `
       : '';
 
+    const isCompliant = report.summary.violations_count === 0;
+
     return `
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Official Notice of Non-Compliance - ${report.audit_id}</title>
+        <title>${isCompliant ? 'Official Certificate of Statutory Compliance' : 'Official Notice of Non-Compliance'} - ${report.audit_id}</title>
         <style>
           @page { size: A4; margin: 20mm; }
           body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #111827; margin: 0; padding: 20px; line-height: 1.5; }
@@ -53,14 +55,14 @@ export class NoticeGenerator {
           .emblem { font-size: 20px; font-weight: 800; letter-spacing: 2px; color: #1e3a8a; }
           .dept { font-size: 14px; font-weight: 600; text-transform: uppercase; color: #4b5563; }
           .sub { font-size: 11px; color: #6b7280; }
-          .title-box { background: #111827; color: white; padding: 8px 16px; margin: 15px 0; text-align: center; font-weight: 700; letter-spacing: 1px; font-size: 15px; border-radius: 4px; }
+          .title-box { background: ${isCompliant ? '#065f46' : '#111827'}; color: white; padding: 8px 16px; margin: 15px 0; text-align: center; font-weight: 700; letter-spacing: 1px; font-size: 15px; border-radius: 4px; }
           .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; font-size: 13px; }
           .meta-item { padding: 8px; background: #f3f4f6; border-radius: 4px; }
           table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
           th { background: #f3f4f6; text-align: left; padding: 10px; font-size: 12px; border-bottom: 2px solid #d1d5db; color: #1f2937; }
-          .directives { margin-top: 25px; padding: 15px; background: #fff1f2; border: 1px solid #fecdd3; border-radius: 6px; }
-          .directives h4 { margin: 0 0 10px 0; color: #9f1239; font-size: 14px; }
-          .directives ul { margin: 0; padding-left: 20px; font-size: 12.5px; color: #881337; }
+          .directives { margin-top: 25px; padding: 15px; background: ${isCompliant ? '#f0fdf4' : '#fff1f2'}; border: 1px solid ${isCompliant ? '#bbf7d0' : '#fecdd3'}; border-radius: 6px; }
+          .directives h4 { margin: 0 0 10px 0; color: ${isCompliant ? '#166534' : '#9f1239'}; font-size: 14px; }
+          .directives ul { margin: 0; padding-left: 20px; font-size: 12.5px; color: ${isCompliant ? '#14532d' : '#881337'}; }
           .signatures { display: flex; justify-content: space-between; margin-top: 50px; padding-top: 20px; border-top: 1px dashed #9ca3af; font-size: 13px; }
           @media print {
             body { padding: 0; }
@@ -77,7 +79,9 @@ export class NoticeGenerator {
         </div>
 
         <div class="title-box">
-          INSPECTION MEMORANDUM & NOTICE OF STATUTORY CONTRAVENTION
+          ${isCompliant 
+            ? 'INSPECTION MEMORANDUM & CERTIFICATE OF STATUTORY COMPLIANCE' 
+            : 'INSPECTION MEMORANDUM & NOTICE OF STATUTORY CONTRAVENTION'}
         </div>
 
         <div class="meta-grid">
@@ -116,12 +120,21 @@ export class NoticeGenerator {
         ${uspCalcHtml}
 
         <div class="directives">
-          <h4>STATUTORY DIRECTIVE & RECTIFICATION ORDER</h4>
-          <ul>
-            <li>Under <strong>Rule 32</strong> of the Legal Metrology (Packaged Commodities) Rules, 2011, distribution or offer for sale of non-compliant packages is an actionable statutory offense punishable with fine up to ₹25,000/- for the first offense and ₹50,000/- or imprisonment for subsequent offenses.</li>
-            <li>The Manufacturer / Importer / Packer is hereby directed to show cause within <strong>15 days</strong> of receipt of this notice as to why compounding or legal prosecution proceedings under Section 36 / Section 39 should not be initiated.</li>
-            <li>Retail distribution of non-compliant batches must be paused until corrective labeling or compounding is completed under Section 48 of the Act.</li>
-          </ul>
+          ${isCompliant ? `
+            <h4>STATUTORY CLEARANCE & VERIFICATION RECORD</h4>
+            <ul>
+              <li>This pre-packaged commodity has been audited pursuant to the <strong>Legal Metrology (Packaged Commodities) Rules, 2011</strong>.</li>
+              <li>All mandatory declarations either strictly conform to Rule 6 or qualify for statutory exemption under <strong>Rule 26(a) (Small Packages ≤ 10g / 10ml)</strong>.</li>
+              <li>No actionable contraventions or violations of Rule 32 were detected. This product is verified lawful for commercial distribution and retail sale.</li>
+            </ul>
+          ` : `
+            <h4>STATUTORY DIRECTIVE & RECTIFICATION ORDER</h4>
+            <ul>
+              <li>Under <strong>Rule 32</strong> of the Legal Metrology (Packaged Commodities) Rules, 2011, distribution or offer for sale of non-compliant packages is an actionable statutory offense punishable with fine up to ₹25,000/- for the first offense and ₹50,000/- or imprisonment for subsequent offenses.</li>
+              <li>The Manufacturer / Importer / Packer is hereby directed to show cause within <strong>15 days</strong> of receipt of this notice as to why compounding or legal prosecution proceedings under Section 36 / Section 39 should not be initiated.</li>
+              <li>Retail distribution of non-compliant batches must be paused until corrective labeling or compounding is completed under Section 48 of the Act.</li>
+            </ul>
+          `}
         </div>
 
         <div class="signatures">
