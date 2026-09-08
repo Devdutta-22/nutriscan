@@ -464,35 +464,77 @@ export const ComplaintPortal: React.FC<ComplaintPortalProps> = ({ isOpen, onClos
                 <p className="text-xs text-zinc-400 mt-2">Save this number to track your complaint</p>
               </div>
 
-              {/* Routing info */}
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-left space-y-2">
-                <p className="text-xs font-black text-blue-800 flex items-center gap-1">
-                  <Building2 className="w-3.5 h-3.5" /> Routed To
+              {/* Relevant Government Portals Directory */}
+              <div className="space-y-2 text-left">
+                <p className="text-xs font-black text-zinc-900 uppercase tracking-wider flex items-center gap-1.5">
+                  <Shield className="w-3.5 h-3.5 text-[#FF2A85]" /> Relevant Government Portals
                 </p>
-                <p className="text-sm font-bold text-zinc-800">{result.routed_to?.department}</p>
-                <p className="text-xs text-zinc-600">📧 {result.routed_to?.email}</p>
-                <p className="text-xs text-zinc-600">📞 {result.routed_to?.phone}</p>
-              </div>
 
-              {/* INGRAM / NCH info */}
-              <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 text-left space-y-2">
-                <p className="text-xs font-black text-orange-800">National Consumer Helpline</p>
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">📞</span>
-                  <div>
-                    <p className="text-sm font-black text-zinc-900">1800-11-4000</p>
-                    <p className="text-[10px] text-zinc-500">Toll-free · Mon–Sat 9 AM – 5 PM</p>
+                {/* 1. State Legal Metrology */}
+                <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black uppercase text-purple-700">Competent Authority (Legal Metrology)</span>
+                    <span className="text-[9px] font-bold bg-purple-200/60 text-purple-800 px-1.5 py-0.5 rounded">Action Agency</span>
+                  </div>
+                  <p className="text-xs font-black text-purple-950">{result.routed_to?.department || 'State Legal Metrology Dept'}</p>
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-zinc-600 pt-0.5">
+                    {result.routed_to?.phone && <span>📞 {result.routed_to.phone}</span>}
+                    {result.routed_to?.email && <span>📧 {result.routed_to.email}</span>}
                   </div>
                 </div>
-                <a
-                  href="https://consumerhelpline.gov.in"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-xs font-semibold text-orange-600 hover:text-orange-800 transition-colors"
-                >
-                  <ExternalLink className="w-3 h-3" />
-                  consumerhelpline.gov.in (INGRAM)
-                </a>
+
+                {/* 2. National Consumer Helpline (INGRAM) */}
+                <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black uppercase text-orange-700">National Consumer Helpline (INGRAM)</span>
+                    <a
+                      href="https://consumerhelpline.gov.in"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] font-bold text-orange-600 hover:text-orange-800 flex items-center gap-1"
+                    >
+                      consumerhelpline.gov.in <ExternalLink className="w-2.5 h-2.5" />
+                    </a>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-zinc-900">Toll-Free: 1800-11-4000</span>
+                    <span className="text-[10px] text-zinc-500">SMS: 8800001915</span>
+                  </div>
+                </div>
+
+                {/* 3. e-Daakhil Consumer Commission Portal */}
+                <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] font-black uppercase text-indigo-700">e-Daakhil Online Consumer Court</p>
+                    <p className="text-xs font-bold text-zinc-800">Formal Litigation &amp; Compensation (NCDRC)</p>
+                  </div>
+                  <a
+                    href="https://edaakhil.nic.in"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[11px] px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-colors"
+                  >
+                    <span>edaakhil.nic.in</span>
+                    <ExternalLink className="w-2.5 h-2.5" />
+                  </a>
+                </div>
+
+                {/* 4. FSSAI Grievance Portal */}
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] font-black uppercase text-amber-700">FSSAI Consumer Grievance Portal</p>
+                    <p className="text-xs font-bold text-zinc-800">Food Safety &amp; Nutrition Non-Compliance</p>
+                  </div>
+                  <a
+                    href="https://foodlicensing.fssai.gov.in/cmsweb/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-colors"
+                  >
+                    <span>FSSAI Portal</span>
+                    <ExternalLink className="w-2.5 h-2.5" />
+                  </a>
+                </div>
               </div>
 
               {/* Track button */}

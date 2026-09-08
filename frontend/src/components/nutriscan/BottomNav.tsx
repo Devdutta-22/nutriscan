@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, PieChart, Layers, User, Scan } from 'lucide-react';
+import { Home, PieChart, Megaphone, User, Scan } from 'lucide-react';
 
 interface BottomNavProps {
   activeTab: string;
@@ -48,15 +48,15 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           </button>
         </div>
 
-        {/* Tab 3: Category */}
+        {/* Tab 3: File Complaint */}
         <button
-          onClick={() => onSelectTab('category')}
+          onClick={() => onSelectTab('complaint')}
           className={`flex flex-col items-center gap-1 py-1 px-2 transition-all active:scale-95 ${
-            activeTab === 'category' ? 'text-[#8B5CF6] font-black' : 'text-zinc-400 hover:text-zinc-700'
+            activeTab === 'complaint' ? 'text-[#FF2A85] font-black' : 'text-zinc-400 hover:text-zinc-700'
           }`}
         >
-          <Layers className={`w-5 h-5 stroke-[2.2] ${activeTab === 'category' ? 'text-[#8B5CF6]' : ''}`} />
-          <span className="text-[10px]">Category</span>
+          <Megaphone className={`w-5 h-5 stroke-[2.2] ${activeTab === 'complaint' ? 'text-[#FF2A85]' : ''}`} />
+          <span className="text-[10px]">Complaint</span>
         </button>
 
         {/* Tab 4: Profile */}

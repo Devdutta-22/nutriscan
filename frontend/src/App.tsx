@@ -14,6 +14,7 @@ import { FullPageReport } from './components/nutriscan/FullPageReport';
 import { InspectionDrawer } from './components/nutriscan/InspectionDrawer';
 import { InsightsView } from './components/nutriscan/InsightsView';
 import { CategoryView } from './components/nutriscan/CategoryView';
+import { DedicatedComplaintView } from './components/complaints/DedicatedComplaintView';
 import { ProfileView } from './components/nutriscan/ProfileView';
 import { PromotionalShowcase } from './components/nutriscan/PromotionalShowcase';
 import { MobileQuickBar } from './components/nutriscan/MobileQuickBar';
@@ -107,7 +108,7 @@ export function App() {
           setIsUploadModalOpen(true);
         }
 
-        if (tabParam && ['home', 'insights', 'category', 'profile', 'gazette'].includes(tabParam)) {
+        if (tabParam && ['home', 'insights', 'complaint', 'category', 'profile', 'gazette'].includes(tabParam)) {
           setActiveTab(tabParam);
         }
       } catch (err) {
@@ -321,7 +322,19 @@ export function App() {
           </div>
         )}
 
-        {/* Tab 3: Category View */}
+        {/* Tab 3: Dedicated File Complaint View */}
+        {activeTab === 'complaint' && (
+          <div className="max-w-4xl mx-auto">
+            <DedicatedComplaintView
+              report={report}
+              onOpenComplaintModal={() => setIsComplaintOpen(true)}
+              onOpenTrackerModal={() => setIsTrackerOpen(true)}
+              onOpenGovPortal={() => setIsGovDashboardOpen(true)}
+            />
+          </div>
+        )}
+
+        {/* Optional Category View (retained for direct link / category browse) */}
         {activeTab === 'category' && (
           <div className="max-w-3xl mx-auto">
             <CategoryView onSelectItem={handleSelectItem} />

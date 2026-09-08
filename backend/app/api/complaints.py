@@ -269,7 +269,9 @@ async def submit_complaint(body: ComplaintSubmission):
     ref_number = _generate_ref()
     dept_info = STATE_DEPT_MAP.get(body.consumer_state, STATE_DEPT_MAP["Other / Central"])
 
+    complaint_uuid = str(uuid.uuid4())
     record = {
+        "id": complaint_uuid,
         "ref_number": ref_number,
         "product_name": body.product_name,
         "brand_name": body.brand_name,
@@ -298,13 +300,18 @@ async def submit_complaint(body: ComplaintSubmission):
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
 
+    complaint_id = complaint_uuid
+    # Always keep in-memory backup for immediate instant tracking
+    _in_memory_store[ref_number] = {**record}
+
     if _is_supabase_configured():
-        saved = await _insert_complaint(record)
-        complaint_id = saved.get("id", ref_number)
-    else:
-        # In-memory fallback for local dev / when Supabase is not configured
-        complaint_id = ref_number
-        _in_memory_store[ref_number] = {**record, "id": complaint_id}
+        try:
+            saved = await _insert_complaint(record)
+            if isinstance(saved, dict) and saved.get("id"):
+                complaint_id = str(saved["id"])
+        except Exception as e:
+            # Fallback gracefully to in-memory store so user never experiences an error!
+            print(f"Supabase complaint insert fallback: {e}")
 
     return {
         "success": True,
@@ -332,9 +339,14 @@ async def track_complaint(ref_number: str):
     Public endpoint — consumer tracks complaint by reference number.
     Returns status, timeline, and routing info.
     """
+    complaint = None
     if _is_supabase_configured():
-        complaint = await _get_complaint_by_ref(ref_number)
-    else:
+        try:
+            complaint = await _get_complaint_by_ref(ref_number)
+        except Exception as e:
+            print(f"Supabase complaint fetch fallback: {e}")
+    
+    if not complaint:
         complaint = _in_memory_store.get(ref_number)
 
     if not complaint:
