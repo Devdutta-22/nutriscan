@@ -179,3 +179,59 @@ export interface DemoPreset {
   bounding_boxes: BoundingBox[];
 }
 
+// ─── Accuracy Validation System Types ────────────────────────────────
+
+export interface ValidationMandateResult {
+  mandate_id: string;
+  name: string;
+  rule: string;
+  engine_status: ComplianceStatus;
+  engine_reason: string;
+  referee_status: ComplianceStatus;
+  referee_reasoning: string;
+  human_verdict?: ComplianceStatus;
+}
+
+export interface MandateAccuracy {
+  mandate_id: string;
+  name: string;
+  accuracy: number;
+  tp: number;
+  tn: number;
+  fp: number;
+  fn: number;
+  total: number;
+}
+
+export interface AccuracyMetricsBlock {
+  accuracy: number;
+  precision: number;
+  recall: number;
+  f1_score: number;
+  tp: number;
+  tn: number;
+  fp: number;
+  fn: number;
+  per_mandate: Record<string, MandateAccuracy>;
+}
+
+export interface AccuracyMetrics {
+  total_verified: number;
+  engine_metrics: AccuracyMetricsBlock;
+  referee_metrics: AccuracyMetricsBlock;
+}
+
+export interface ValidationRecord {
+  specimen_id: string;
+  product_name?: string;
+  image_url?: string;
+  engine_results: ValidationMandateResult[];
+  referee_results?: ValidationMandateResult[];
+  human_verdicts?: Record<string, ComplianceStatus>;
+  accuracy_metrics?: AccuracyMetricsBlock;
+  referee_model?: string;
+  human_verified_by?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+

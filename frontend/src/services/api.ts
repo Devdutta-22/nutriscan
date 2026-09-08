@@ -464,4 +464,58 @@ export class FairPackAPI {
       packaging_symbols: labelData.packaging_symbols,
     };
   }
+
+  // ─── Accuracy Validation System ──────────────────────────────────────
+
+  static async runValidation(specimenId: string): Promise<any> {
+    const res = await fetch(`${API_BASE}/validation/run/${specimenId}`, {
+      method: 'POST',
+    });
+    if (!res.ok) throw new Error(`Validation run failed: ${res.statusText}`);
+    return res.json();
+  }
+
+  static async submitHumanVerdicts(
+    specimenId: string,
+    verdicts: Record<string, string>,
+    verifiedBy: string = 'Inspector'
+  ): Promise<any> {
+    const res = await fetch(`${API_BASE}/validation/verify/${specimenId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ verdicts, verified_by: verifiedBy }),
+    });
+    if (!res.ok) throw new Error(`Verification submit failed: ${res.statusText}`);
+    return res.json();
+  }
+
+  static async getValidationStatus(specimenId: string): Promise<any> {
+    const res = await fetch(`${API_BASE}/validation/status/${specimenId}`);
+    if (!res.ok) return null;
+    return res.json();
+  }
+
+  static async getAccuracyMetrics(): Promise<any> {
+    try {
+      const res = await fetch(`${API_BASE}/validation/accuracy`);
+      if (res.ok) return res.json();
+    } catch {
+      // Fallback
+    }
+    return null;
+  }
+
+  static async getAllValidations(
+    limit: number = 20,
+    offset: number = 0
+  ): Promise<{ validations: any[]; count: number; has_more: boolean }> {
+    try {
+      const res = await fetch(`${API_BASE}/validation/all?limit=${limit}&offset=${offset}`);
+      if (res.ok) return res.json();
+    } catch {
+      // Fallback
+    }
+    return { validations: [], count: 0, has_more: false };
+  }
 }
+

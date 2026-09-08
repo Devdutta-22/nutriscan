@@ -26,6 +26,7 @@ import { NoticeModal } from './components/export/NoticeModal';
 import { ComplaintPortal } from './components/complaints/ComplaintPortal';
 import { ComplaintTracker } from './components/complaints/ComplaintTracker';
 import { GovDashboard } from './components/complaints/GovDashboard';
+import { ValidationModal } from './components/nutriscan/ValidationModal';
 import { FairPackAPI } from './services/api';
 import { AuditReport } from './types/compliance';
 
@@ -39,6 +40,8 @@ export function App() {
   const [isComplaintOpen, setIsComplaintOpen] = useState<boolean>(false);
   const [isTrackerOpen, setIsTrackerOpen] = useState<boolean>(false);
   const [isGovDashboardOpen, setIsGovDashboardOpen] = useState<boolean>(false);
+  const [isValidationOpen, setIsValidationOpen] = useState<boolean>(false);
+  const [validationSpecimen, setValidationSpecimen] = useState<any>(null);
   const [isMobileFrameMode, setIsMobileFrameMode] = useState<boolean>(false);
   const [recentItems, setRecentItems] = useState<ScannedItem[]>(RECENT_ITEMS);
   const [hasMoreSpecimens, setHasMoreSpecimens] = useState<boolean>(false);
@@ -370,7 +373,13 @@ export function App() {
         {/* Tab 2: Insights View */}
         {activeTab === 'insights' && (
           <div className="max-w-3xl mx-auto">
-            <InsightsView onBackToHome={() => setActiveTab('home')} />
+            <InsightsView
+              onBackToHome={() => setActiveTab('home')}
+              onOpenValidation={(specimen: any) => {
+                setValidationSpecimen(specimen);
+                setIsValidationOpen(true);
+              }}
+            />
           </div>
         )}
 
@@ -476,6 +485,19 @@ export function App() {
       {isGovDashboardOpen && (
         <GovDashboard onClose={() => setIsGovDashboardOpen(false)} />
       )}
+
+      {/* Accuracy Validation Modal */}
+      <ValidationModal
+        isOpen={isValidationOpen}
+        onClose={() => {
+          setIsValidationOpen(false);
+          setValidationSpecimen(null);
+        }}
+        specimen={validationSpecimen}
+        onValidationComplete={() => {
+          // Refresh insights when validation is submitted
+        }}
+      />
     </div>
   );
 }
