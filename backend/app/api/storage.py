@@ -11,6 +11,7 @@ import uuid
 import urllib.request
 import urllib.error
 from typing import List, Dict, Any, Optional
+from app.config import Settings  # ensures .env is loaded
 
 # Supabase settings
 SUPABASE_URL = os.getenv("SUPABASE_URL", "https://mwpgbtviumhzjwqvbvuo.supabase.co")

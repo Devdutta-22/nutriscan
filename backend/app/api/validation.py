@@ -10,14 +10,25 @@ router = APIRouter(prefix="/validation", tags=["validation"])
 
 def get_supabase_specimen(specimen_id: str) -> Optional[Dict[str, Any]]:
     try:
-        url = f"{SUPABASE_URL}/rest/v1/specimens?id=eq.{specimen_id}"
-        req = urllib.request.Request(url, headers=_supabase_headers(use_service_key=False))
+        url = f"{SUPABASE_URL}/rest/v1/specimens?or=(id.eq.{specimen_id},audit_id.eq.{specimen_id})"
+        req = urllib.request.Request(url, headers=_supabase_headers(use_service_key=True))
         with urllib.request.urlopen(req, timeout=10) as resp:
             data = json.loads(resp.read().decode("utf-8"))
-            if data and isinstance(data, list):
+            if data and isinstance(data, list) and len(data) > 0:
                 return data[0]
     except Exception as e:
-        print(f"Error fetching specimen {specimen_id}: {e}")
+        print(f"Error fetching specimen {specimen_id} from Supabase: {e}")
+
+    # Fallback to local storage
+    try:
+        from app.api.storage import get_specimens_from_db
+        all_specs = get_specimens_from_db(limit=50, offset=0)
+        for s in all_specs:
+            if s.get("id") == specimen_id or s.get("audit_id") == specimen_id:
+                return s
+    except Exception as e:
+        print(f"Fallback specimen fetch error: {e}")
+
     return None
 
 def get_supabase_validation(specimen_id: str) -> Optional[Dict[str, Any]]:
@@ -97,21 +108,22 @@ async def run_validation(specimen_id: str):
         "image_url": specimen.get("image_url"),
         "engine_results": merged_engine,
         "referee_results": merged_referee,
-        "referee_model": "gemini-2.0-flash",
+        "referee_model": "gemini-flash-latest",
         "human_verdicts": None,
         "accuracy_metrics": None,
         "status": "awaiting_human_verification",
     }
 
-    # Persist to Supabase validations table
+    # Persist to Supabase validations table (with upsert)
     try:
-        url = f"{SUPABASE_URL}/rest/v1/validations"
+        url = f"{SUPABASE_URL}/rest/v1/validations?on_conflict=specimen_id"
         payload = json.dumps(validation_record).encode("utf-8")
         headers = _supabase_headers(use_service_key=True)
         headers["Prefer"] = "resolution=merge-duplicates"
         req = urllib.request.Request(url, data=payload, headers=headers, method="POST")
         with urllib.request.urlopen(req, timeout=10) as resp:
             pass
+
     except Exception as e:
         # Non-fatal: still return the record even if persistence fails
         print(f"Warning: Failed to save validation to Supabase: {e}")
@@ -219,23 +231,28 @@ async def get_accuracy_metrics():
     referee_per_mandate_counts = {}
 
     for val in validations:
-        em = val.get("engine_metrics", {}).get("counts", {})
+        em = val.get("accuracy_metrics") or val.get("engine_metrics") or {}
         engine_tp += em.get("tp", 0)
         engine_tn += em.get("tn", 0)
         engine_fp += em.get("fp", 0)
         engine_fn += em.get("fn", 0)
-        for m_id, res in val.get("engine_metrics", {}).get("per_mandate", {}).items():
-            if m_id not in engine_per_mandate_counts: engine_per_mandate_counts[m_id] = {"tp":0,"tn":0,"fp":0,"fn":0}
-            engine_per_mandate_counts[m_id][res.lower()] += 1
+        for m_id, res in em.get("per_mandate", {}).items():
+            if m_id not in engine_per_mandate_counts:
+                engine_per_mandate_counts[m_id] = {"tp": 0, "tn": 0, "fp": 0, "fn": 0}
+            if str(res).lower() in engine_per_mandate_counts[m_id]:
+                engine_per_mandate_counts[m_id][str(res).lower()] += 1
 
-        rm = val.get("referee_metrics", {}).get("counts", {})
+        rm = val.get("referee_accuracy_metrics") or val.get("referee_metrics") or {}
         referee_tp += rm.get("tp", 0)
         referee_tn += rm.get("tn", 0)
         referee_fp += rm.get("fp", 0)
         referee_fn += rm.get("fn", 0)
-        for m_id, res in val.get("referee_metrics", {}).get("per_mandate", {}).items():
-            if m_id not in referee_per_mandate_counts: referee_per_mandate_counts[m_id] = {"tp":0,"tn":0,"fp":0,"fn":0}
-            referee_per_mandate_counts[m_id][res.lower()] += 1
+        for m_id, res in rm.get("per_mandate", {}).items():
+            if m_id not in referee_per_mandate_counts:
+                referee_per_mandate_counts[m_id] = {"tp": 0, "tn": 0, "fp": 0, "fn": 0}
+            if str(res).lower() in referee_per_mandate_counts[m_id]:
+                referee_per_mandate_counts[m_id][str(res).lower()] += 1
+
 
     def agg_metrics(tp, tn, fp, fn):
         total = tp + tn + fp + fn

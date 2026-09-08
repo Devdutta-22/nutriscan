@@ -61,7 +61,7 @@ REFEREE_SCHEMA = {
 class RefereeEngine:
     def __init__(self):
         self._api_key = Settings.GEMINI_API_KEY
-        self._model = "gemini-2.0-flash"
+        self._model = "gemini-flash-latest"
         self._base_url = Settings.GEMINI_API_BASE
 
     @property
