@@ -8,17 +8,24 @@ import { ClientBarcodeEngine } from './barcodeEngine';
 const API_BASE = '/api';
 
 export class FairPackAPI {
-  static async getStoredSpecimens(limit: number = 50): Promise<any[]> {
+  static async getStoredSpecimens(
+    limit: number = 8,
+    offset: number = 0
+  ): Promise<{ specimens: any[]; count: number; has_more: boolean }> {
     try {
-      const res = await fetch(`${API_BASE}/audit/specimens?limit=${limit}`);
+      const res = await fetch(`${API_BASE}/audit/specimens?limit=${limit}&offset=${offset}`);
       if (res.ok) {
         const data = await res.json();
-        return data.specimens || [];
+        return {
+          specimens: data.specimens || [],
+          count: data.count || (data.specimens ? data.specimens.length : 0),
+          has_more: typeof data.has_more === 'boolean' ? data.has_more : (data.specimens?.length === limit),
+        };
       }
     } catch {
       // Fallback
     }
-    return [];
+    return { specimens: [], count: 0, has_more: false };
   }
 
   static async deleteStoredSpecimen(specimenId: string): Promise<boolean> {

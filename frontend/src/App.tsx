@@ -41,6 +41,9 @@ export function App() {
   const [isGovDashboardOpen, setIsGovDashboardOpen] = useState<boolean>(false);
   const [isMobileFrameMode, setIsMobileFrameMode] = useState<boolean>(false);
   const [recentItems, setRecentItems] = useState<ScannedItem[]>(RECENT_ITEMS);
+  const [hasMoreSpecimens, setHasMoreSpecimens] = useState<boolean>(false);
+  const [isLoadingMoreSpecimens, setIsLoadingMoreSpecimens] = useState<boolean>(false);
+  const [specimensOffset, setSpecimensOffset] = useState<number>(0);
 
   // Helper to format ISO date to readable relative time
   const formatTimeAgo = (dateStr: string) => {
@@ -101,40 +104,65 @@ export function App() {
     };
   };
 
-  // Load default preset audit on start & check query parameters
+  // Load default preset audit and first packet of specimens in parallel
   useEffect(() => {
-    async function loadInitial() {
-      try {
-        const initialReport = await FairPackAPI.runAudit('compliant-biscuit');
-        setReport(initialReport);
+    // 1. Initial preset audit in parallel
+    FairPackAPI.runAudit('compliant-biscuit')
+      .then((initialReport) => setReport(initialReport))
+      .catch((err) => console.warn('Initial preset audit error:', err));
 
-        // Fetch stored records from backend database
-        const storedSpecimens = await FairPackAPI.getStoredSpecimens(50);
-        if (storedSpecimens && storedSpecimens.length > 0) {
-          const dbItems = storedSpecimens.map(convertSpecimenToItem);
+    // 2. Fetch first packet of 8 specimens immediately for instant display
+    FairPackAPI.getStoredSpecimens(8, 0)
+      .then((res) => {
+        if (res.specimens && res.specimens.length > 0) {
+          const dbItems = res.specimens.map(convertSpecimenToItem);
           setRecentItems([...dbItems, ...RECENT_ITEMS]);
+          setSpecimensOffset(res.specimens.length);
+          setHasMoreSpecimens(res.has_more);
         }
+      })
+      .catch((err) => console.warn('Specimens packet load error:', err));
 
-        // Check if opened via PWA Shortcut action or query params
-        const params = new URLSearchParams(window.location.search);
-        const actionParam = params.get('action');
-        const tabParam = params.get('tab');
+    // Check if opened via PWA Shortcut action or query params
+    const params = new URLSearchParams(window.location.search);
+    const actionParam = params.get('action');
+    const tabParam = params.get('tab');
 
-        if (actionParam === 'scan') {
-          setIsScannerOpen(true);
-        } else if (actionParam === 'upload') {
-          setIsUploadModalOpen(true);
-        }
-
-        if (tabParam && ['home', 'insights', 'complaint', 'category', 'profile', 'gazette'].includes(tabParam)) {
-          setActiveTab(tabParam);
-        }
-      } catch (err) {
-        console.error('Audit load error:', err);
-      }
+    if (actionParam === 'scan') {
+      setIsScannerOpen(true);
+    } else if (actionParam === 'upload') {
+      setIsUploadModalOpen(true);
     }
-    loadInitial();
+
+    if (tabParam && ['home', 'insights', 'complaint', 'category', 'profile', 'gazette'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
   }, []);
+
+  // Fetch next packet of specimens on demand
+  const handleLoadMoreSpecimens = async () => {
+    if (isLoadingMoreSpecimens || !hasMoreSpecimens) return;
+    setIsLoadingMoreSpecimens(true);
+    try {
+      const res = await FairPackAPI.getStoredSpecimens(8, specimensOffset);
+      if (res.specimens && res.specimens.length > 0) {
+        const newDbItems = res.specimens.map(convertSpecimenToItem);
+        setRecentItems((prev) => {
+          const existingIds = new Set(prev.map((p) => p.id));
+          const uniqueNew = newDbItems.filter((item) => !existingIds.has(item.id));
+          return [...prev, ...uniqueNew];
+        });
+        setSpecimensOffset((prev) => prev + res.specimens.length);
+        setHasMoreSpecimens(res.has_more);
+      } else {
+        setHasMoreSpecimens(false);
+      }
+    } catch (err) {
+      console.warn('Load more specimens error:', err);
+    } finally {
+      setIsLoadingMoreSpecimens(false);
+    }
+  };
 
   const handleSelectItem = async (item: ScannedItem) => {
     try {
@@ -295,6 +323,9 @@ export function App() {
                       onSelectItem={handleSelectItem}
                       onSeeAll={() => setActiveTab('category')}
                       onDeleteItem={handleDeleteItem}
+                      onLoadMore={handleLoadMoreSpecimens}
+                      hasMore={hasMoreSpecimens}
+                      isLoadingMore={isLoadingMoreSpecimens}
                     />
                   </div>
                 </div>
@@ -327,6 +358,9 @@ export function App() {
                   onSelectItem={handleSelectItem}
                   onSeeAll={() => setActiveTab('category')}
                   onDeleteItem={handleDeleteItem}
+                  onLoadMore={handleLoadMoreSpecimens}
+                  hasMore={hasMoreSpecimens}
+                  isLoadingMore={isLoadingMoreSpecimens}
                 />
               </div>
             )}

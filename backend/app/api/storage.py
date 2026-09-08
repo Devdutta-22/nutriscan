@@ -81,15 +81,16 @@ async def upload_image_to_r2(file_bytes: bytes, filename: str, content_type: str
         print(f"Cloudflare R2 upload error: {e}")
         return None
 
-def get_specimens_from_db(limit: int = 50) -> List[Dict[str, Any]]:
+def get_specimens_from_db(limit: int = 10, offset: int = 0) -> List[Dict[str, Any]]:
     """
-    Fetches specimens from Supabase, with graceful fallback to local file.
+    Fetches specimens from Supabase in packets, with graceful fallback to local file.
+    Supports limit & offset for high-performance packeted pagination.
     """
     if is_supabase_enabled():
         try:
-            url = f"{SUPABASE_URL}/rest/v1/specimens?select=*&order=created_at.desc&limit={limit}"
+            url = f"{SUPABASE_URL}/rest/v1/specimens?select=*&order=created_at.desc&limit={limit}&offset={offset}"
             req = urllib.request.Request(url, headers=_supabase_headers(use_service_key=False))
-            with urllib.request.urlopen(req, timeout=5) as resp:
+            with urllib.request.urlopen(req, timeout=8) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
                 if isinstance(data, list):
                     return data
@@ -102,7 +103,8 @@ def get_specimens_from_db(limit: int = 50) -> List[Dict[str, Any]]:
             with open(SPECIMENS_FILE, "r", encoding="utf-8") as f:
                 content = f.read().strip()
                 if content:
-                    return json.loads(content)[:limit]
+                    records = json.loads(content)
+                    return records[offset : offset + limit]
         except Exception as e:
             print(f"Local file read error: {e}")
     return []

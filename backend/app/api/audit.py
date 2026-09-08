@@ -37,13 +37,19 @@ async def get_presets():
     }
 
 @router.get("/specimens")
-async def get_stored_specimens(limit: int = Query(50, ge=1, le=100)):
+async def get_stored_specimens(
+    limit: int = Query(10, ge=1, le=100),
+    offset: int = Query(0, ge=0)
+):
     """
-    Returns all permanently stored label records from Supabase database.
+    Returns stored label records from Supabase in fast packets.
     """
-    records = get_specimens_from_db(limit=limit)
+    records = get_specimens_from_db(limit=limit, offset=offset)
     return {
         "count": len(records),
+        "limit": limit,
+        "offset": offset,
+        "has_more": len(records) == limit,
         "supabase_connected": is_supabase_enabled(),
         "specimens": records
     }

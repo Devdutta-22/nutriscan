@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Wheat, Coffee, Cookie, Image as ImageIcon, Trash2, Database } from 'lucide-react';
+import { Wheat, Coffee, Cookie, Image as ImageIcon, Trash2, Database, ChevronDown, RefreshCw } from 'lucide-react';
 import { AuditReport } from '../../types/compliance';
 
 export interface ScannedItem {
@@ -23,6 +23,9 @@ interface RecentlyScannedProps {
   onSelectItem: (item: ScannedItem) => void;
   onSeeAll?: () => void;
   onDeleteItem?: (id: string, e: React.MouseEvent) => void;
+  onLoadMore?: () => void;
+  hasMore?: boolean;
+  isLoadingMore?: boolean;
 }
 
 export const RECENT_ITEMS: ScannedItem[] = [
@@ -106,6 +109,9 @@ export const RecentlyScanned: React.FC<RecentlyScannedProps> = ({
   onSelectItem,
   onSeeAll,
   onDeleteItem,
+  onLoadMore,
+  hasMore = false,
+  isLoadingMore = false,
 }) => {
   const [filterMode, setFilterMode] = useState<'all' | 'uploaded'>('all');
 
@@ -234,6 +240,29 @@ export const RecentlyScanned: React.FC<RecentlyScannedProps> = ({
               </div>
             );
           })
+        )}
+
+        {/* Load More Packet Button */}
+        {onLoadMore && hasMore && (
+          <div className="pt-2 flex justify-center">
+            <button
+              onClick={onLoadMore}
+              disabled={isLoadingMore}
+              className="w-full py-2.5 px-4 rounded-xl bg-white border border-zinc-300 hover:border-zinc-800 text-zinc-900 font-bold text-xs flex items-center justify-center gap-2 shadow-2xs hover:shadow-xs transition-all active:scale-[0.99] disabled:opacity-60 cursor-pointer"
+            >
+              {isLoadingMore ? (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#8B5CF6]" />
+                  <span>Fetching Next Packet...</span>
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="w-3.5 h-3.5 text-zinc-600" />
+                  <span>Load More Records (Packet of 8)</span>
+                </>
+              )}
+            </button>
+          </div>
         )}
       </div>
     </div>
