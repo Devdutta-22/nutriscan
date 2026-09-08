@@ -12,6 +12,23 @@ export interface ExtractedLabelFields {
   consumer_care_phone?: string;
   consumer_care_email?: string;
   country_of_origin?: string;
+  calories?: number;
+  total_fat?: number;
+  fat?: number;
+  carbohydrates?: number;
+  carbs?: number;
+  protein?: number;
+  sugars?: number;
+  sugar?: number;
+  serving_size?: string;
+  nutrition?: {
+    calories?: number;
+    fat?: number;
+    carbs?: number;
+    protein?: number;
+    sugar?: number;
+    serving_size?: string;
+  };
   raw_text: string;
 }
 
@@ -255,6 +272,36 @@ export class ClientOCREngine {
       fields.country_of_origin = countryFound.charAt(0).toUpperCase() + countryFound.slice(1).toLowerCase();
     } else if (/made\s*in\s*india/i.test(text)) {
       fields.country_of_origin = 'India';
+    }
+
+    // 9. Nutritional Facts Table / Panel Parsing
+    const energyMatch = text.match(/(?:energy|calories|caloric\s*value)\s*[:\.\-]?\s*(\d+(?:\.\d+)?)\s*(?:kcal|cal|kj)?/i);
+    const fatMatch = text.match(/(?:total\s*fat|fat)\s*[:\.\-]?\s*(\d+(?:\.\d+)?)\s*(?:g|gm|grams)?/i);
+    const carbsMatch = text.match(/(?:carbohydrates?|total\s*carbohydrates?|carbs)\s*[:\.\-]?\s*(\d+(?:\.\d+)?)\s*(?:g|gm|grams)?/i);
+    const proteinMatch = text.match(/(?:protein)\s*[:\.\-]?\s*(\d+(?:\.\d+)?)\s*(?:g|gm|grams)?/i);
+    const sugarMatch = text.match(/(?:total\s*sugars?|sugars?|added\s*sugars?)\s*[:\.\-]?\s*(\d+(?:\.\d+)?)\s*(?:g|gm|grams)?/i);
+
+    if (energyMatch || fatMatch || carbsMatch || proteinMatch || sugarMatch) {
+      const cal = energyMatch ? parseFloat(energyMatch[1]) : undefined;
+      const fat = fatMatch ? parseFloat(fatMatch[1]) : undefined;
+      const carbs = carbsMatch ? parseFloat(carbsMatch[1]) : undefined;
+      const protein = proteinMatch ? parseFloat(proteinMatch[1]) : undefined;
+      const sugar = sugarMatch ? parseFloat(sugarMatch[1]) : undefined;
+
+      if (cal !== undefined) fields.calories = cal;
+      if (fat !== undefined) { fields.total_fat = fat; fields.fat = fat; }
+      if (carbs !== undefined) { fields.carbohydrates = carbs; fields.carbs = carbs; }
+      if (protein !== undefined) fields.protein = protein;
+      if (sugar !== undefined) { fields.sugars = sugar; fields.sugar = sugar; }
+
+      fields.nutrition = {
+        calories: cal,
+        fat,
+        carbs,
+        protein,
+        sugar,
+        serving_size: 'Per 100g'
+      };
     }
 
     return fields;

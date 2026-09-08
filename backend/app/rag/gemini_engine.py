@@ -312,6 +312,18 @@ Transcribe and extract the following exact fields if present on the label:
     - recycling_info: Object with { detected: boolean, resin_code: string (1-7), material_name: string (e.g. 'PET', 'PP'), mobius_loop: boolean, tidyman_symbol: boolean }
     - e_mark: Object with { detected: boolean, details: string or null }
     - pao_symbol: Object with { detected: boolean, period: string or null }
+- nutrition: Object or null (for food commodities declaring a nutritional table or panel) with:
+    - calories: number or null (energy value in kcal, e.g. 446)
+    - fat: number or null (total fat in g, e.g. 14.5)
+    - carbs: number or null (total carbohydrates in g, e.g. 68.2)
+    - protein: number or null (protein in g, e.g. 7.8)
+    - sugar: number or null (sugars in g, e.g. 18.5)
+    - serving_size: string or null (e.g. 'Per 100g' or 'Per 30g')
+- calories: number or null (energy in kcal e.g. 446)
+- total_fat: number or null (total fat in g e.g. 14.5)
+- carbohydrates: number or null (carbs in g e.g. 68.2)
+- protein: number or null (protein in g e.g. 7.8)
+- sugars: number or null (sugars in g e.g. 18.5)
 
 Respond with valid JSON. If a field is not visible, return null for that field. Do not invent details."""
 
@@ -364,7 +376,21 @@ Respond with valid JSON. If a field is not visible, return null for that field. 
                 return None
 
             generated_text = p_list[0].get("text", "")
-            return json.loads(generated_text)
+            res = json.loads(generated_text)
+            if isinstance(res, dict):
+                nut = res.get("nutrition")
+                if isinstance(nut, dict):
+                    if not res.get("calories") and nut.get("calories") is not None:
+                        res["calories"] = nut.get("calories")
+                    if not res.get("total_fat") and nut.get("fat") is not None:
+                        res["total_fat"] = nut.get("fat")
+                    if not res.get("carbohydrates") and nut.get("carbs") is not None:
+                        res["carbohydrates"] = nut.get("carbs")
+                    if not res.get("protein") and nut.get("protein") is not None:
+                        res["protein"] = nut.get("protein")
+                    if not res.get("sugars") and nut.get("sugar") is not None:
+                        res["sugars"] = nut.get("sugar")
+            return res
         except Exception as e:
             logger.warning(f"Gemini Single-Vision extraction failed: {e}")
             return None
@@ -420,6 +446,18 @@ Combine and transcribe all visible statutory declarations and packaging symbols 
     - recycling_info: Object with { detected: boolean, resin_code: string (1-7), material_name: string (e.g. 'PET', 'PP'), mobius_loop: boolean, tidyman_symbol: boolean }
     - e_mark: Object with { detected: boolean, details: string or null }
     - pao_symbol: Object with { detected: boolean, period: string or null }
+- nutrition: Object or null (for food commodities declaring a nutritional table or panel) with:
+    - calories: number or null (energy value in kcal, e.g. 446)
+    - fat: number or null (total fat in g, e.g. 14.5)
+    - carbs: number or null (total carbohydrates in g, e.g. 68.2)
+    - protein: number or null (protein in g, e.g. 7.8)
+    - sugar: number or null (sugars in g, e.g. 18.5)
+    - serving_size: string or null (e.g. 'Per 100g' or 'Per 30g')
+- calories: number or null (energy in kcal e.g. 446)
+- total_fat: number or null (total fat in g e.g. 14.5)
+- carbohydrates: number or null (carbs in g e.g. 68.2)
+- protein: number or null (protein in g e.g. 7.8)
+- sugars: number or null (sugars in g e.g. 18.5)
 
 Respond with valid JSON. If a declaration cannot be found on ANY of the provided images, return null for that field. Do not fabricate details."""
 
@@ -475,7 +513,21 @@ Respond with valid JSON. If a declaration cannot be found on ANY of the provided
                 return None
 
             generated_text = p_list[0].get("text", "")
-            return json.loads(generated_text)
+            res = json.loads(generated_text)
+            if isinstance(res, dict):
+                nut = res.get("nutrition")
+                if isinstance(nut, dict):
+                    if not res.get("calories") and nut.get("calories") is not None:
+                        res["calories"] = nut.get("calories")
+                    if not res.get("total_fat") and nut.get("fat") is not None:
+                        res["total_fat"] = nut.get("fat")
+                    if not res.get("carbohydrates") and nut.get("carbs") is not None:
+                        res["carbohydrates"] = nut.get("carbs")
+                    if not res.get("protein") and nut.get("protein") is not None:
+                        res["protein"] = nut.get("protein")
+                    if not res.get("sugars") and nut.get("sugar") is not None:
+                        res["sugars"] = nut.get("sugar")
+            return res
 
         except Exception as e:
             logger.warning(f"Gemini Multi-Vision extraction failed: {e}")

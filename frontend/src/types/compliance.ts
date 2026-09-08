@@ -153,6 +153,20 @@ export interface DemoPreset {
     consumer_care_phone: string;
     consumer_care_email: string;
     country_of_origin: string;
+    calories?: number;
+    total_fat?: number;
+    carbohydrates?: number;
+    protein?: number;
+    sugars?: number;
+    serving_size?: string;
+    nutrition?: {
+      calories?: number;
+      fat?: number;
+      carbs?: number;
+      protein?: number;
+      sugar?: number;
+      serving_size?: string;
+    };
     barcode_data?: BarcodeData;
     qr_data?: QRCodeData;
     packaging_symbols?: PackagingSymbols;

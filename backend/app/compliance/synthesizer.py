@@ -95,7 +95,8 @@ class AuditSynthesizer:
             all_chunks=all_chunks,
             gemini_result=None,
             tokens=tokens,
-            image_metadata=image_metadata
+            image_metadata=image_metadata,
+            label_data=label_data
         )
 
     @classmethod
@@ -163,11 +164,12 @@ class AuditSynthesizer:
             all_chunks=all_chunks,
             gemini_result=gemini_result,
             tokens=tokens,
-            image_metadata=image_metadata
+            image_metadata=image_metadata,
+            label_data=label_data
         )
 
     @classmethod
-    def _compile_report(cls, product_name, product_category, big8_result, enriched_checklist, all_chunks, gemini_result, tokens, image_metadata):
+    def _compile_report(cls, product_name, product_category, big8_result, enriched_checklist, all_chunks, gemini_result, tokens, image_metadata, label_data=None):
         
         violations_count = 0
         warnings_count = 0
@@ -231,6 +233,7 @@ class AuditSynthesizer:
             "gemini_analysis": gemini_result or None,
             "tokens": tokens or [],
             "image_metadata": image_metadata or {"width": 800, "height": 600},
+            "label_data": label_data or {},
             "barcode_data": big8_result.get("barcode_data"),
             "qr_data": big8_result.get("qr_data"),
             "packaging_symbols": big8_result.get("packaging_symbols"),
