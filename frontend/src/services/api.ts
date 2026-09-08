@@ -215,27 +215,32 @@ export class FairPackAPI {
     isLiveUpload?: boolean
   ): AuditReport {
     const preset = DEMO_PRESETS.find((p) => p.id === presetId) || DEMO_PRESETS[0];
-    const labelData = data || preset.label_data;
-    const productName = name || preset.title;
-    const boundingBoxes = boxes || preset.bounding_boxes;
+    const labelData = isLiveUpload ? (data || {}) : (data || preset.label_data);
+    const productName = name || (isLiveUpload ? 'Scanned Packaging Specimen' : preset.title);
+    const boundingBoxes = boxes || (isLiveUpload ? [] : preset.bounding_boxes);
 
     const uspVerification = ClientMathEngine.verifyUsp(
       labelData.mrp,
       labelData.net_quantity,
       labelData.unit_sale_price
     );
+    const hasUspBaseData = Boolean(labelData.mrp && labelData.net_quantity);
+    const resolvedUspStatus = hasUspBaseData ? uspVerification.status : 'VIOLATION';
+    const resolvedUspReason = hasUspBaseData 
+      ? uspVerification.reason 
+      : 'MRP and/or Net Quantity missing from packaging; Unit Sale Price (USP) cannot be computed or verified.';
 
     const checklist: ChecklistItem[] = [
       {
         mandate_id: 'generic_name',
         name: 'Generic Commodity Name',
         rule: 'Rule 6(1)(b)',
-        status: labelData.generic_name ? 'COMPLIANT' : 'WARNING',
+        status: labelData.generic_name ? 'COMPLIANT' : 'VIOLATION',
         extracted_text: labelData.generic_name || '[NOT FOUND]',
         reason: labelData.generic_name
           ? `Standard generic title '${labelData.generic_name}' identified on principal display panel.`
           : 'Generic or common name is missing or obscured on front packaging.',
-        severity: 'MEDIUM',
+        severity: 'HIGH',
         citation_key: 'rule_6_1_b',
         gazette_citation: STATUTORY_RULES.find((r) => r.id === 'rule_6_1_b'),
       },
@@ -277,10 +282,10 @@ export class FairPackAPI {
         mandate_id: 'usp',
         name: 'Unit Sale Price (USP)',
         rule: 'Rule 6(1)(s)',
-        status: uspVerification.status,
+        status: resolvedUspStatus,
         extracted_text: labelData.unit_sale_price || '[NOT FOUND]',
-        reason: uspVerification.reason,
-        severity: uspVerification.status === 'VIOLATION' ? 'CRITICAL' : 'LOW',
+        reason: resolvedUspReason,
+        severity: resolvedUspStatus === 'VIOLATION' ? 'CRITICAL' : 'LOW',
         details: uspVerification,
         citation_key: 'rule_6_1_s',
         gazette_citation: STATUTORY_RULES.find((r) => r.id === 'rule_6_1_s'),
@@ -344,10 +349,12 @@ export class FairPackAPI {
         mandate_id: 'country_of_origin',
         name: 'Country of Origin',
         rule: 'Rule 6(1)(g)',
-        status: labelData.country_of_origin ? 'COMPLIANT' : 'WARNING',
-        extracted_text: labelData.country_of_origin || 'India',
-        reason: `Country of origin explicitly declared: ${labelData.country_of_origin || 'India'}.`,
-        severity: 'LOW',
+        status: labelData.country_of_origin ? 'COMPLIANT' : 'VIOLATION',
+        extracted_text: labelData.country_of_origin || '[NOT FOUND]',
+        reason: labelData.country_of_origin
+          ? `Country of origin explicitly declared: ${labelData.country_of_origin}.`
+          : 'Country of origin is not declared on the package.',
+        severity: 'HIGH',
         citation_key: 'rule_6_1_g',
         gazette_citation: STATUTORY_RULES.find((r) => r.id === 'rule_6_1_g'),
       },
@@ -355,12 +362,12 @@ export class FairPackAPI {
         mandate_id: 'best_before',
         name: 'Best Before / Expiry Date',
         rule: 'Rule 6(1)(f)',
-        status: labelData.expiry_date || labelData.best_before ? 'COMPLIANT' : 'WARNING',
+        status: labelData.expiry_date || labelData.best_before ? 'COMPLIANT' : 'VIOLATION',
         extracted_text: labelData.expiry_date || labelData.best_before || '[NOT DECLARED]',
         reason: labelData.expiry_date || labelData.best_before
           ? `Best before / use-by date present: ${labelData.expiry_date || labelData.best_before}.`
-          : 'Perishable commodity declaration should declare Best Before / Use By period.',
-        severity: 'MEDIUM',
+          : 'Best before / expiry date or shelf life declaration is absent.',
+        severity: 'HIGH',
         citation_key: 'rule_6_1_f',
         gazette_citation: STATUTORY_RULES.find((r) => r.id === 'rule_6_1_f'),
       },
@@ -368,10 +375,22 @@ export class FairPackAPI {
         mandate_id: 'language',
         name: 'Language Compliance',
         rule: 'Rule 9(4)',
-        status: labelData.language_detected && /english|hindi/i.test(labelData.language_detected) ? 'COMPLIANT' : 'COMPLIANT',
-        extracted_text: labelData.language_detected || 'English',
-        reason: 'Mandatory declarations verified in official statutory language (English/Hindi).',
-        severity: 'LOW',
+        status:
+          labelData.language_detected && /english|hindi/i.test(labelData.language_detected)
+            ? 'COMPLIANT'
+            : !labelData.raw_text && !labelData.generic_name
+            ? 'VIOLATION'
+            : labelData.language_detected
+            ? 'VIOLATION'
+            : 'WARNING',
+        extracted_text: labelData.language_detected || (labelData.raw_text ? 'Unknown' : '[NO TEXT DETECTED]'),
+        reason:
+          labelData.language_detected && /english|hindi/i.test(labelData.language_detected)
+            ? 'Mandatory declarations verified in official statutory language (English/Hindi).'
+            : !labelData.raw_text && !labelData.generic_name
+            ? 'No legible text detected on the image to verify statutory language.'
+            : 'Declarations appear to be in an unauthorized language.',
+        severity: 'HIGH',
         citation_key: 'rule_9_4',
         gazette_citation: STATUTORY_RULES.find((r) => r.id === 'rule_9_4'),
       },
@@ -379,11 +398,19 @@ export class FairPackAPI {
         mandate_id: 'dual_mrp',
         name: 'Dual MRP Detection',
         rule: 'Rule 18(2A)',
-        status: Array.isArray(labelData.mrp_values) && labelData.mrp_values.length > 1 ? 'VIOLATION' : 'COMPLIANT',
-        extracted_text: labelData.mrp || 'Single MRP Verified',
-        reason: Array.isArray(labelData.mrp_values) && labelData.mrp_values.length > 1
-          ? 'Dual MRP detected on same product unit, strictly prohibited by Rule 18(2A).'
-          : 'Uniform single pricing verified. No dual pricing detected.',
+        status:
+          Array.isArray(labelData.mrp_values) && labelData.mrp_values.length > 1
+            ? 'VIOLATION'
+            : !labelData.mrp
+            ? 'VIOLATION'
+            : 'COMPLIANT',
+        extracted_text: labelData.mrp || '[NO MRP DETECTED]',
+        reason:
+          Array.isArray(labelData.mrp_values) && labelData.mrp_values.length > 1
+            ? 'Dual MRP detected on same product unit, strictly prohibited by Rule 18(2A).'
+            : !labelData.mrp
+            ? 'No retail price detected on package to verify pricing consistency.'
+            : 'Uniform single pricing verified. No dual pricing detected.',
         severity: 'CRITICAL',
         citation_key: 'rule_18_2a',
         gazette_citation: STATUTORY_RULES.find((r) => r.id === 'rule_18_2a'),

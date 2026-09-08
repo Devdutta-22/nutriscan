@@ -18,7 +18,7 @@ export const LiveScannerModal: React.FC<LiveScannerModalProps> = ({
   onAuditComplete,
   onFileUpload,
 }) => {
-  const [useRealCamera, setUseRealCamera] = useState(false);
+  const [useRealCamera, setUseRealCamera] = useState(true);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analyzingStage, setAnalyzingStage] = useState('Position packaging inside frame');
   const [selectedPreset, setSelectedPreset] = useState<string>('compliant-biscuit');

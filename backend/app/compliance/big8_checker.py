@@ -327,6 +327,19 @@ class Big8Checker:
                 "citation_key": "rule_6_1_s"
             })
             warnings_count += 1
+        elif usp_verification["status"] == "ERROR":
+            results.append({
+                "mandate_id": "usp",
+                "name": "Unit Sale Price (USP)",
+                "rule": "Rule 6(1)(s)",
+                "status": "VIOLATION",
+                "extracted_text": usp_str or "Missing",
+                "reason": "MRP and/or Net Quantity are missing from label; statutory Unit Sale Price (USP) cannot be computed or verified.",
+                "severity": "HIGH",
+                "details": usp_verification,
+                "citation_key": "rule_6_1_s"
+            })
+            violations_count += 1
         else:
             results.append({
                 "mandate_id": "usp",
@@ -504,6 +517,18 @@ class Big8Checker:
                     "citation_key": "rule_6_1_f"
                 })
                 warnings_count += 1
+            elif not gen_name and not mrp and not net_qty:
+                results.append({
+                    "mandate_id": "best_before",
+                    "name": "Best Before / Expiry Date",
+                    "rule": "Rule 6(1)(f)",
+                    "status": "VIOLATION",
+                    "extracted_text": "Missing",
+                    "reason": "No packaging declarations or product shelf-life/expiry dates found.",
+                    "severity": "HIGH",
+                    "citation_key": "rule_6_1_f"
+                })
+                violations_count += 1
             else:
                 results.append({
                     "mandate_id": "best_before",
@@ -519,7 +544,21 @@ class Big8Checker:
 
         # 10. Language Compliance (Rule 9(4))
         lang_detected = str(label_data.get("language_detected", "")).lower()
-        if "english" in lang_detected or "hindi" in lang_detected:
+        has_any_text = bool(label_data.get("raw_text") or gen_name or mfg_val or mrp or net_qty)
+
+        if not has_any_text:
+            results.append({
+                "mandate_id": "language",
+                "name": "Language Compliance",
+                "rule": "Rule 9(4)",
+                "status": "VIOLATION",
+                "extracted_text": "No text detected",
+                "reason": "No legible statutory text or declarations found on the scanned image.",
+                "severity": "HIGH",
+                "citation_key": "rule_9_4"
+            })
+            violations_count += 1
+        elif "english" in lang_detected or "hindi" in lang_detected:
             results.append({
                 "mandate_id": "language",
                 "name": "Language Compliance",
@@ -570,6 +609,18 @@ class Big8Checker:
                 "citation_key": "rule_18_2a"
             })
             violations_count += 1
+        elif not mrp and (not mrp_values or len(mrp_values) == 0):
+            results.append({
+                "mandate_id": "dual_mrp",
+                "name": "Dual MRP Detection",
+                "rule": "Rule 18(2A)",
+                "status": "VIOLATION",
+                "extracted_text": "No MRP detected",
+                "reason": "No Maximum Retail Price (MRP) found on packaging to verify pricing compliance.",
+                "severity": "HIGH",
+                "citation_key": "rule_18_2a"
+            })
+            violations_count += 1
         else:
             results.append({
                 "mandate_id": "dual_mrp",
@@ -577,7 +628,7 @@ class Big8Checker:
                 "rule": "Rule 18(2A)",
                 "status": "COMPLIANT",
                 "extracted_text": str(mrp_values) if mrp_values else mrp,
-                "reason": "No dual MRP detected.",
+                "reason": "Uniform single pricing verified.",
                 "severity": "LOW",
                 "citation_key": "rule_18_2a"
             })
