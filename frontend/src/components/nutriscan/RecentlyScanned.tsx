@@ -37,11 +37,12 @@ export const RECENT_ITEMS: ScannedItem[] = [
     icon: Wheat,
     iconBg: 'bg-[#F4FBD6] text-zinc-900',
     presetId: 'compliant-biscuit',
+    image_url: '/banners/banner_goodday.jpg',
   },
   {
     id: '2',
-    name: 'Iced Energy Drink',
-    category: 'Beverages',
+    name: 'Hydrating Face Cream',
+    category: 'Cosmetics',
     timeAgo: 'Yesterday',
     grade: 'C',
     gradeBg: 'bg-[#FF2A85]',
@@ -49,11 +50,12 @@ export const RECENT_ITEMS: ScannedItem[] = [
     icon: Coffee,
     iconBg: 'bg-[#D7F9FB] text-zinc-900',
     presetId: 'violating-face-cream',
+    image_url: '/banners/banner_cosmetic.jpg',
   },
   {
     id: '3',
-    name: 'Choco Chip Cookies',
-    category: 'Snacks & Sweets',
+    name: 'Swiss Dark Chocolate',
+    category: 'Confectionery',
     timeAgo: '2 days ago',
     grade: 'B-',
     gradeBg: 'bg-[#8B5CF6]',
@@ -61,8 +63,43 @@ export const RECENT_ITEMS: ScannedItem[] = [
     icon: Cookie,
     iconBg: 'bg-[#FDE2EC] text-zinc-900',
     presetId: 'imported-chocolate',
+    image_url: '/banners/banner_chocolate.jpg',
   },
 ];
+
+const ItemThumbnail: React.FC<{
+  imageUrl?: string;
+  name: string;
+  IconComponent: any;
+  iconBg?: string;
+}> = ({ imageUrl, name, IconComponent, iconBg }) => {
+  const [hasError, setHasError] = useState(false);
+
+  if (imageUrl && !hasError) {
+    return (
+      <div className="w-11 h-11 rounded-xl bg-zinc-100 border border-zinc-200 overflow-hidden shrink-0 shadow-inner group-hover:scale-105 transition-transform flex items-center justify-center relative">
+        <img
+          src={imageUrl}
+          alt={name}
+          className="w-full h-full object-cover"
+          loading="lazy"
+          onError={() => setHasError(true)}
+        />
+        <span className="absolute bottom-0.5 right-0.5 text-[8px] font-mono text-[#D5FF3F] font-black px-1 rounded bg-black/80">
+          IMG
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`w-11 h-11 rounded-2xl ${iconBg || 'bg-zinc-100 text-zinc-800'} flex items-center justify-center shrink-0 shadow-inner group-hover:scale-105 transition-transform`}
+    >
+      <IconComponent className="w-5 h-5 stroke-[2.2]" />
+    </div>
+  );
+};
 
 export const RecentlyScanned: React.FC<RecentlyScannedProps> = ({
   items = RECENT_ITEMS,
@@ -143,7 +180,6 @@ export const RecentlyScanned: React.FC<RecentlyScannedProps> = ({
         ) : (
           displayedItems.map((item) => {
             const IconComponent = item.icon || ImageIcon;
-            const hasImage = Boolean(item.image_url);
 
             return (
               <div
@@ -153,28 +189,12 @@ export const RecentlyScanned: React.FC<RecentlyScannedProps> = ({
               >
                 {/* Left: Thumbnail or Icon and Details */}
                 <div className="flex items-center gap-3 min-w-0">
-                  {hasImage ? (
-                    <div className="w-11 h-11 rounded-xl bg-zinc-100 border border-zinc-200 overflow-hidden shrink-0 shadow-inner group-hover:scale-105 transition-transform flex items-center justify-center relative">
-                      <img
-                        src={item.image_url}
-                        alt={item.name}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLElement).style.display = 'none';
-                        }}
-                      />
-                      <span className="absolute bottom-0.5 right-0.5 text-[8px] font-mono text-[#D5FF3F] font-black px-1 rounded bg-black/80">
-                        IMG
-                      </span>
-                    </div>
-                  ) : (
-                    <div
-                      className={`w-11 h-11 rounded-2xl ${item.iconBg || 'bg-zinc-100 text-zinc-800'} flex items-center justify-center shrink-0 shadow-inner group-hover:scale-105 transition-transform`}
-                    >
-                      <IconComponent className="w-5 h-5 stroke-[2.2]" />
-                    </div>
-                  )}
+                  <ItemThumbnail
+                    imageUrl={item.image_url}
+                    name={item.name}
+                    IconComponent={IconComponent}
+                    iconBg={item.iconBg}
+                  />
 
                   <div className="truncate">
                     <div className="flex items-center gap-1.5 truncate">

@@ -65,6 +65,24 @@ export function App() {
     const isA = spec.compliance_score >= 90;
     const isB = spec.compliance_score >= 70;
     const formattedName = spec.product_name || 'Scanned Specimen';
+    const lowerName = formattedName.toLowerCase();
+    const lowerCat = (spec.product_category || '').toLowerCase();
+
+    // Default image resolver if spec.image_url is not set
+    let resolvedImage = spec.image_url || spec.report?.image_url;
+    if (!resolvedImage) {
+      if (lowerName.includes('biscuit') || lowerName.includes('parle') || lowerName.includes('munch') || lowerName.includes('cake') || lowerName.includes('tadka') || lowerName.includes('chips') || lowerName.includes('lay')) {
+        resolvedImage = '/banners/banner_goodday.jpg';
+      } else if (lowerName.includes('chocolate') || lowerName.includes('lindt') || lowerName.includes('sweet') || lowerName.includes('cookie')) {
+        resolvedImage = '/banners/banner_chocolate.jpg';
+      } else if (lowerName.includes('cream') || lowerName.includes('face') || lowerName.includes('lotion') || lowerName.includes('lip') || lowerName.includes('perfume') || lowerName.includes('powder') || lowerName.includes('cleaner') || lowerCat.includes('cosmetic')) {
+        resolvedImage = '/banners/banner_cosmetic.jpg';
+      } else if (lowerName.includes('drink') || lowerName.includes('juice') || lowerName.includes('water') || lowerName.includes('frooti') || lowerName.includes('maaza') || lowerName.includes('carbonated') || lowerCat.includes('beverage')) {
+        resolvedImage = '/banners/banner_soda.jpg';
+      } else if (lowerName.includes('protein') || lowerName.includes('supplement')) {
+        resolvedImage = '/banners/banner_protein.jpg';
+      }
+    }
 
     return {
       id: spec.id || spec.audit_id,
@@ -77,7 +95,7 @@ export function App() {
       icon: ImageIcon,
       iconBg: 'bg-[#D5FF3F]/30 text-zinc-900',
       presetId: spec.id || 'custom-upload',
-      image_url: spec.image_url || spec.report?.image_url,
+      image_url: resolvedImage,
       is_database_record: true,
       report: spec.report,
     };
