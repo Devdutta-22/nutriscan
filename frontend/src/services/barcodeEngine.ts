@@ -26,7 +26,25 @@ export class ClientBarcodeEngine {
         });
 
         const imageBitmap = await createImageBitmap(file);
-        const barcodes = await detector.detect(imageBitmap);
+        let barcodes = await detector.detect(imageBitmap);
+
+        // Pass 2: If nothing detected, run an Inverted pass (critical for white QR codes / light text on dark wrappers)
+        if (barcodes.length === 0 && typeof document !== 'undefined') {
+          try {
+            const offscreen = document.createElement('canvas');
+            offscreen.width = imageBitmap.width;
+            offscreen.height = imageBitmap.height;
+            const offCtx = offscreen.getContext('2d');
+            if (offCtx) {
+              offCtx.filter = 'invert(1) contrast(1.4)';
+              offCtx.drawImage(imageBitmap, 0, 0);
+              const invertedBitmap = await createImageBitmap(offscreen);
+              barcodes = await detector.detect(invertedBitmap);
+            }
+          } catch (invErr) {
+            // Non-blocking fallback
+          }
+        }
 
         for (const item of barcodes) {
           const rawVal = item.rawValue || '';

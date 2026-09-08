@@ -1,7 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Camera, Sparkles, RefreshCw, Zap, CheckCircle2, UploadCloud, Video, SwitchCamera, Plus, Trash2, Layers } from 'lucide-react';
+import { 
+  X, Camera, Sparkles, RefreshCw, Zap, CheckCircle2, UploadCloud, 
+  Video, SwitchCamera, Plus, Trash2, Layers, Sun, Moon, Contrast, Sliders 
+} from 'lucide-react';
 import { AuditReport } from '../../types/compliance';
 import { FairPackAPI } from '../../services/api';
+
+type PackagingFilter = 'normal' | 'invert' | 'antiglare' | 'bw';
 
 interface LiveScannerModalProps {
   isOpen: boolean;
@@ -19,6 +24,7 @@ export const LiveScannerModal: React.FC<LiveScannerModalProps> = ({
   onFileUpload,
 }) => {
   const [useRealCamera, setUseRealCamera] = useState(true);
+  const [activeFilter, setActiveFilter] = useState<PackagingFilter>('normal');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analyzingStage, setAnalyzingStage] = useState('Position packaging inside frame');
   const [selectedPreset, setSelectedPreset] = useState<string>('compliant-biscuit');
@@ -26,6 +32,19 @@ export const LiveScannerModal: React.FC<LiveScannerModalProps> = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const getFilterCss = (filter: PackagingFilter): string => {
+    switch (filter) {
+      case 'invert':
+        return 'invert(1) contrast(1.4) brightness(1.05)';
+      case 'antiglare':
+        return 'contrast(1.6) brightness(0.92) saturate(0.8)';
+      case 'bw':
+        return 'grayscale(1) contrast(2.2) brightness(1.1)';
+      default:
+        return 'none';
+    }
+  };
 
   // Initialize real device camera stream if requested
   useEffect(() => {
@@ -69,6 +88,11 @@ export const LiveScannerModal: React.FC<LiveScannerModalProps> = ({
       canvas.height = video.videoHeight || 480;
       const ctx = canvas.getContext('2d');
       if (!ctx) return resolve(null);
+
+      const filterCss = getFilterCss(activeFilter);
+      if (filterCss !== 'none') {
+        ctx.filter = filterCss;
+      }
 
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       canvas.toBlob((blob) => {
@@ -178,7 +202,8 @@ export const LiveScannerModal: React.FC<LiveScannerModalProps> = ({
               autoPlay
               playsInline
               muted
-              className="w-full h-full object-cover"
+              style={{ filter: getFilterCss(activeFilter) }}
+              className="w-full h-full object-cover transition-all duration-300"
             />
           ) : (
             /* Synthetic High-Tech Packaging Viewfinder */
@@ -255,6 +280,14 @@ export const LiveScannerModal: React.FC<LiveScannerModalProps> = ({
               </>
             )}
           </button>
+
+          {/* Active Filter Indicator Badge */}
+          {useRealCamera && activeFilter !== 'normal' && (
+            <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-black/85 backdrop-blur-md border border-[#26E1E8]/60 text-[#26E1E8] text-[10px] font-mono font-bold flex items-center gap-1.5 z-20 shadow-md">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#26E1E8] animate-pulse" />
+              <span>LENS: {activeFilter.toUpperCase()}</span>
+            </div>
+          )}
         </div>
 
         {/* Action Controls Footer */}
@@ -262,6 +295,79 @@ export const LiveScannerModal: React.FC<LiveScannerModalProps> = ({
           {useRealCamera ? (
             /* Real Camera Multi-Panel Capture Controls */
             <div className="space-y-3">
+              {/* Packaging Lens Filters Selector */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-[11px] font-bold text-zinc-300">
+                  <span className="flex items-center gap-1.5">
+                    <Sliders className="w-3.5 h-3.5 text-[#26E1E8]" />
+                    Packaging Lens Filters
+                  </span>
+                  <span className="text-[10px] text-zinc-400 font-mono">
+                    {activeFilter === 'invert' && 'Inverted for dark wrappers'}
+                    {activeFilter === 'antiglare' && 'Anti-glare for shiny foil'}
+                    {activeFilter === 'bw' && 'High-contrast black & white'}
+                    {activeFilter === 'normal' && 'Standard optical feed'}
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-4 gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setActiveFilter('normal')}
+                    className={`py-1.5 px-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 transition-all border ${
+                      activeFilter === 'normal'
+                        ? 'bg-zinc-800 border-[#D5FF3F] text-[#D5FF3F] shadow-sm'
+                        : 'bg-zinc-900/60 border-white/10 text-zinc-400 hover:text-white hover:bg-zinc-800/60'
+                    }`}
+                  >
+                    <Sun className="w-3.5 h-3.5" />
+                    <span>Normal</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveFilter('invert')}
+                    className={`py-1.5 px-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 transition-all border ${
+                      activeFilter === 'invert'
+                        ? 'bg-zinc-800 border-[#26E1E8] text-[#26E1E8] shadow-sm'
+                        : 'bg-zinc-900/60 border-white/10 text-zinc-400 hover:text-white hover:bg-zinc-800/60'
+                    }`}
+                    title="Inverts colors: best for white/gold text on dark brown/black wrappers"
+                  >
+                    <Moon className="w-3.5 h-3.5" />
+                    <span>Invert</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveFilter('antiglare')}
+                    className={`py-1.5 px-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 transition-all border ${
+                      activeFilter === 'antiglare'
+                        ? 'bg-zinc-800 border-amber-400 text-amber-300 shadow-sm'
+                        : 'bg-zinc-900/60 border-white/10 text-zinc-400 hover:text-white hover:bg-zinc-800/60'
+                    }`}
+                    title="Anti-glare: cuts reflections on shiny metallic wrappers and foil packets"
+                  >
+                    <Zap className="w-3.5 h-3.5" />
+                    <span>Anti-Glare</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveFilter('bw')}
+                    className={`py-1.5 px-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 transition-all border ${
+                      activeFilter === 'bw'
+                        ? 'bg-zinc-800 border-purple-400 text-purple-300 shadow-sm'
+                        : 'bg-zinc-900/60 border-white/10 text-zinc-400 hover:text-white hover:bg-zinc-800/60'
+                    }`}
+                    title="High contrast B&W: best for faint ink stamps and low-contrast labels"
+                  >
+                    <Contrast className="w-3.5 h-3.5" />
+                    <span>B&amp;W</span>
+                  </button>
+                </div>
+              </div>
+
               {/* Captured Panels Tray */}
               {capturedPanels.length > 0 && (
                 <div className="space-y-1.5">

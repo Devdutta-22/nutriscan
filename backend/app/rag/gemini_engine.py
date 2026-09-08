@@ -280,6 +280,11 @@ Respond with valid JSON matching the required schema. Do NOT include any text ou
         vision_prompt = """You are an OCR and Packaging Text Transcription System for Indian pre-packaged commodities.
 Read all printed text, barcodes, QR codes, and statutory symbols from this packaging image carefully, including text on curves, folds, reflective plastic, or barcode areas.
 
+SPECIAL INSTRUCTIONS FOR CHALLENGING PACKAGING (DARK WRAPPERS & SHINY FOILS):
+- For dark background packaging (e.g., dark brown toffee wrappers, dark chocolate packs, black foil with white/gold/yellow text), carefully read inverted light-on-dark text and reverse-contrast printing.
+- For shiny, metallic, crinkled, or reflective wrappers (e.g., foil toffees, metallic pouches), ignore glare reflections and extract all visible printing along seams, folds, and margins.
+- If the image contains an inverted or light-colored QR code on a dark wrapper, decode its contents accurately.
+
 Transcribe and extract the following exact fields if present on the label:
 - is_packaged_commodity: boolean (MUST be false if the image shows a human face, selfie, person, body part, animal, room, furniture, wall, or anything that is NOT a commercial pre-packaged consumer product or label; true ONLY if it is a packaged commodity/retail product label).
 - invalid_reason: string or null (if is_packaged_commodity is false, explain concisely why, e.g., 'Image shows a human face/person, not a pre-packaged consumer commodity label.')
