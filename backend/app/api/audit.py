@@ -189,7 +189,14 @@ async def upload_and_audit(
     # Save permanently into Supabase PostgreSQL
     try:
         score = report.get("compliance_score", 0)
-        grade = "A+" if score >= 90 else ("B-" if score >= 70 else "C")
+        if score >= 95: grade = "A+"
+        elif score >= 85: grade = "A"
+        elif score >= 75: grade = "B+"
+        elif score >= 65: grade = "B"
+        elif score >= 55: grade = "C+"
+        elif score >= 45: grade = "C"
+        elif score >= 35: grade = "D"
+        else: grade = "F"
         
         specimen_entry = {
             "id": report.get("audit_id") or f"specimen-{int(time.time() * 1000)}",
