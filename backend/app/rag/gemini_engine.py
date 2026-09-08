@@ -281,6 +281,8 @@ Respond with valid JSON matching the required schema. Do NOT include any text ou
 Read all printed text, barcodes, QR codes, and statutory symbols from this packaging image carefully, including text on curves, folds, reflective plastic, or barcode areas.
 
 Transcribe and extract the following exact fields if present on the label:
+- is_packaged_commodity: boolean (MUST be false if the image shows a human face, selfie, person, body part, animal, room, furniture, wall, or anything that is NOT a commercial pre-packaged consumer product or label; true ONLY if it is a packaged commodity/retail product label).
+- invalid_reason: string or null (if is_packaged_commodity is false, explain concisely why, e.g., 'Image shows a human face/person, not a pre-packaged consumer commodity label.')
 - generic_name: The common or generic commodity name (e.g., 'RATLAMI SEV', 'POTATO CHIPS'). NOT just the brand logo.
 - net_quantity: The declared net quantity or weight in SI units (e.g., '200 g', '100 ml', '1 N'). Do NOT use 'per 100g' from the nutrition table.
 - mrp: Maximum retail price (e.g., 'Rs. 55.00' or '₹55.00 (INCL. OF ALL TAXES)').

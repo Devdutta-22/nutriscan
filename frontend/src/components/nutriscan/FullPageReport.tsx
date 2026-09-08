@@ -6,7 +6,7 @@ import {
   Layers, Eye, BookOpen, FileText, Barcode as BarcodeIcon, 
   Image as ImageIcon, RefreshCw, Copy, CheckCircle2,
   ExternalLink, Sparkles, ChevronDown, ChevronUp, Award,
-  Megaphone, ShieldCheck, ShieldAlert, Info
+  Megaphone, ShieldCheck, ShieldAlert, Info, RotateCcw
 } from 'lucide-react';
 import { AuditReport, ChecklistItem } from '../../types/compliance';
 import { calculateProductGrade } from '../../utils/grading';
@@ -390,6 +390,41 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
             Gazette Citations
           </button>
         </div>
+
+        {/* Invalid Packaging Specimen Alert Banner */}
+        {(report.is_valid_packaging === false || report.legal_status === 'INVALID_SPECIMEN') && (
+          <div className="p-4 sm:p-5 rounded-2xl bg-rose-50 border-2 border-rose-400 text-rose-950 shadow-sm animate-in fade-in">
+            <div className="flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow text-lg font-bold">
+                🚫
+              </div>
+              <div className="space-y-1 min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h4 className="font-extrabold text-sm sm:text-base text-rose-900">
+                    Invalid Specimen — Not a Packaging Label
+                  </h4>
+                  <span className="text-[10px] font-mono font-bold bg-rose-200 text-rose-900 px-2 py-0.5 rounded-full border border-rose-300">
+                    NOT SAVED TO DATABASE
+                  </span>
+                </div>
+                <p className="text-xs text-rose-800 leading-relaxed">
+                  {report.invalid_reason || report.status_text || 'No pre-packed commodity label or statutory declarations (MRP, Net Quantity, Manufacturer details) were detected in this image. To protect data integrity, this scan was rejected from the permanent database.'}
+                </p>
+                {onRescan && (
+                  <div className="pt-2">
+                    <button
+                      onClick={onRescan}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-900 hover:bg-black text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Take Photo of a Real Product Label</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* MAIN TAB: AUDIT REPORT */}
         {activeTab === 'details' && (

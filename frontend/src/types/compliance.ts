@@ -135,6 +135,8 @@ export interface AuditReport {
   barcode_data?: BarcodeData;
   qr_data?: QRCodeData;
   packaging_symbols?: PackagingSymbols;
+  is_valid_packaging?: boolean;
+  invalid_reason?: string;
 }
 
 export interface DemoPreset {

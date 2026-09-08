@@ -510,13 +510,13 @@ class Big8Checker:
                     "mandate_id": "best_before",
                     "name": "Best Before / Expiry Date",
                     "rule": "Rule 6(1)(f)",
-                    "status": "WARNING",
+                    "status": "VIOLATION",
                     "extracted_text": "Missing",
-                    "reason": "Product category suggests perishable commodity, but no expiry/best before date found.",
-                    "severity": "MEDIUM",
+                    "reason": "Perishable commodity missing mandatory Best Before / Expiry date under Rule 6(1)(f).",
+                    "severity": "HIGH",
                     "citation_key": "rule_6_1_f"
                 })
-                warnings_count += 1
+                violations_count += 1
             elif not gen_name and not mrp and not net_qty:
                 results.append({
                     "mandate_id": "best_before",

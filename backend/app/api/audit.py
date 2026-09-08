@@ -162,15 +162,45 @@ async def upload_and_audit(
                 if v and (not label_data.get(k) or str(label_data.get(k)).strip().lower() in ["", "none", "missing", "n/a", "[not found]"]):
                     label_data[k] = v
 
-    if not label_data.get("generic_name"):
+    # 1. Validation gate: Check if image is an actual packaged commodity
+    is_valid_packaging = True
+    invalid_reason = None
+
+    if vision_worked and vision_fields:
+        if vision_fields.get("is_packaged_commodity") is False:
+            is_valid_packaging = False
+            invalid_reason = vision_fields.get("invalid_reason") or "Image appears to be a person, face, or non-packaging object."
+
+    # 2. Heuristic check: Count essential packaging declarations
+    essential_fields = [
+        label_data.get("mrp"),
+        label_data.get("net_quantity"),
+        label_data.get("manufacturer_address"),
+        label_data.get("consumer_care_phone"),
+        label_data.get("consumer_care_email"),
+        label_data.get("mfg_date"),
+        label_data.get("expiry_date"),
+        label_data.get("unit_sale_price"),
+    ]
+    detected_count = sum(1 for f in essential_fields if f and str(f).strip().lower() not in ["", "none", "missing", "n/a", "[not found]", "null"])
+    has_barcode = bool(label_data.get("barcode_data", {}).get("detected"))
+
+    if detected_count == 0 and not has_barcode:
+        is_valid_packaging = False
+        if not invalid_reason:
+            invalid_reason = "No statutory packaging declarations (MRP, Net Quantity, Manufacturer Address) or product barcodes detected."
+
+    # Don't auto-assign generic name if it is an invalid scan or default filename
+    if not label_data.get("generic_name") and is_valid_packaging:
         clean_name = primary_filename.replace(".jpg", "").replace(".png", "").replace(".jpeg", "")
-        if not clean_name.startswith("IMG") and not clean_name.startswith("upload") and not clean_name.startswith("Camera"):
+        ignore_prefixes = ("IMG", "upload", "Camera", "Panel", "photo", "image", "frame")
+        if not any(clean_name.startswith(p) for p in ignore_prefixes):
             label_data["generic_name"] = clean_name
 
     bounding_boxes = label_data.pop("bounding_boxes", [])
 
     report = await AuditSynthesizer.synthesize_report_with_llm(
-        product_name=label_data.get("generic_name") or primary_filename or product_name,
+        product_name=label_data.get("generic_name") or ("Non-Packaging Specimen" if not is_valid_packaging else primary_filename or product_name),
         label_data=label_data,
         tokens=bounding_boxes,
         image_metadata={
@@ -186,13 +216,37 @@ async def upload_and_audit(
     report["gemini_vision_used"] = vision_worked
     report["vision_provider"] = "Gemini Vision 3.1 Multimodal AI" if vision_worked else "Client OCR"
     report["panel_count"] = len(uploaded_files)
+    report["is_valid_packaging"] = is_valid_packaging
+
+    if not is_valid_packaging:
+        report["invalid_reason"] = invalid_reason
+        report["legal_status"] = "INVALID_SPECIMEN"
+        report["status_text"] = f"🚫 Invalid Image: {invalid_reason} (This photo was NOT saved to database)"
+        report["compliance_score"] = 0
+        report["grade"] = "F"
+        for item in report.get("checklist", []):
+            item["status"] = "VIOLATION"
+            item["extracted_text"] = "[NO PACKAGING DETECTED]"
+            item["reason"] = f"Not a packaged commodity: {invalid_reason}"
+        report["summary"] = {
+            "total_mandates_checked": len(report.get("checklist", [])),
+            "compliant_count": 0,
+            "warnings_count": 0,
+            "violations_count": len(report.get("checklist", [])),
+            "is_lawful_for_sale": False
+        }
+        if final_image_urls:
+            report["image_url"] = final_image_urls[0]
+        # CRITICAL: DO NOT PERSIST TO SUPABASE!
+        print(f"⚠️ Specimen rejected from database: {invalid_reason}")
+        return report
 
     if final_image_urls:
         report["image_url"] = final_image_urls[0]
         if len(final_image_urls) > 1:
             report["additional_image_urls"] = final_image_urls[1:]
 
-    # Save permanently into Supabase PostgreSQL
+    # Save permanently into Supabase PostgreSQL (only valid packaged commodities)
     try:
         score = report.get("compliance_score", 0)
         if score >= 95: grade = "A+"
