@@ -147,9 +147,11 @@ async def upload_and_audit(
         except json.JSONDecodeError:
             label_data = {}
 
+    vision_worked = False
     if gemini_engine.is_available and len(images_payload) > 0:
         vision_fields = await gemini_engine.extract_label_from_images(images_payload)
         if vision_fields:
+            vision_worked = True
             for k, v in vision_fields.items():
                 if v and (not label_data.get(k) or str(label_data.get(k)).strip().lower() in ["", "none", "missing", "n/a", "[not found]"]):
                     label_data[k] = v
@@ -175,6 +177,8 @@ async def upload_and_audit(
     )
     report["bounding_boxes"] = bounding_boxes
     report["is_live_upload"] = True
+    report["gemini_vision_used"] = vision_worked
+    report["vision_provider"] = "Gemini Vision 3.1 Multimodal AI" if vision_worked else "Client OCR"
     report["panel_count"] = len(uploaded_files)
 
     if final_image_urls:

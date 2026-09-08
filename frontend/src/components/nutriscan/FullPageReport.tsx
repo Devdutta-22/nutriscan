@@ -401,12 +401,34 @@ export const FullPageReport: React.FC<FullPageReportProps> = ({
                 <h2 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-[#12161A] uppercase leading-tight">
                   {report.product_name}
                 </h2>
-                <div className="flex items-center gap-2 flex-wrap text-[11px] font-mono font-bold text-zinc-500 uppercase tracking-wider">
+                <div className="flex items-center gap-2 flex-wrap text-[11px] font-mono font-bold text-zinc-500 uppercase tracking-wider pt-0.5">
                   <span>PACKAGED COMMODITY</span>
                   <span>•</span>
                   <span>{report.product_category?.toUpperCase() || 'BRANDX'}</span>
                   <span>•</span>
                   <span className="text-zinc-700 font-bold">{report.audit_id}</span>
+                  {report.gemini_vision_used ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                      <Sparkles className="w-3 h-3 text-emerald-600" />
+                      GEMINI VISION 3.1
+                    </span>
+                  ) : report.is_live_upload ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-zinc-200 text-zinc-700 border border-zinc-300">
+                      <FileText className="w-3 h-3 text-zinc-500" />
+                      CLIENT OCR ENGINE
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-50 text-indigo-700 border border-indigo-200">
+                      <Sparkles className="w-3 h-3 text-indigo-600" />
+                      VERIFIED SPECIMEN
+                    </span>
+                  )}
+                  {report.llm_enhanced && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-300">
+                      <Sparkles className="w-3 h-3 text-purple-600" />
+                      RAG REASONING ACTIVE
+                    </span>
+                  )}
                 </div>
               </div>
 

@@ -128,6 +128,9 @@ export interface AuditReport {
   preset_id?: string;
   label_data?: any;
   is_live_upload?: boolean;
+  gemini_vision_used?: boolean;
+  llm_enhanced?: boolean;
+  vision_provider?: string;
   raw_ocr_text?: string;
   barcode_data?: BarcodeData;
   qr_data?: QRCodeData;
