@@ -261,11 +261,6 @@ export function App() {
           onToggleFrameMode={() => setIsMobileFrameMode(!isMobileFrameMode)}
         />
 
-        {/* Official Government Trust Crest & Consumer Protection Helpline */}
-        <div className="mt-2">
-          <GovtTrustBanner />
-        </div>
-
         {/* PWA Install Banner */}
         <div className="mt-2">
           <PWAInstallBanner />
@@ -367,6 +362,11 @@ export function App() {
                 />
               </div>
             )}
+
+            {/* Official Government of India & Jago Grahak Jago Trust Banner at bottom-most of Home page */}
+            <div className="pt-6 pb-2">
+              <GovtTrustBanner />
+            </div>
           </div>
         )}
 

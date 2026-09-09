@@ -101,23 +101,26 @@ export const AshokaEmblem: React.FC<{ className?: string; size?: number }> = ({
 export const GovtTrustBanner: React.FC<{ className?: string }> = ({ className = '' }) => {
   return (
     <div
-      className={`w-full bg-white/95 backdrop-blur-md rounded-2xl p-3 px-4 border border-zinc-200/90 shadow-xs flex flex-wrap items-center justify-between gap-3.5 text-xs ${className}`}
+      className={`w-full bg-gradient-to-r from-zinc-50 via-white to-amber-50/40 rounded-3xl p-4 sm:p-5 border border-zinc-200/90 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 text-xs ${className}`}
     >
-      <div className="flex items-center gap-3.5">
-        <AshokaEmblem size={30} />
-        <div className="h-7 w-px bg-zinc-200 hidden sm:block" />
-        <div className="hidden md:block">
-          <p className="text-[11px] font-black text-zinc-900 leading-tight">
+      <div className="flex items-center gap-3.5 w-full sm:w-auto justify-center sm:justify-start">
+        <AshokaEmblem size={34} />
+        <div className="h-9 w-px bg-zinc-200 hidden sm:block" />
+        <div>
+          <p className="text-[12px] font-black text-zinc-900 leading-tight">
             उपभोक्ता मामले, खाद्य एवं सार्वजनिक वितरण मंत्रालय
           </p>
-          <p className="text-[9.5px] font-medium text-zinc-500 mt-0.5">
+          <p className="text-[10px] font-semibold text-zinc-600 mt-0.5">
             Ministry of Consumer Affairs, Food &amp; Public Distribution • Legal Metrology Division
+          </p>
+          <p className="text-[9px] text-zinc-400 font-medium">
+            Government of India • Statutory Enforcement &amp; Public Awareness
           </p>
         </div>
       </div>
 
-      <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
-        <JagoGrahakJagoLogo size={34} />
+      <div className="flex items-center gap-3 sm:gap-4 flex-wrap justify-center sm:justify-end w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-100">
+        <JagoGrahakJagoLogo size={38} />
         <NationalConsumerHelplineBadge />
       </div>
     </div>
