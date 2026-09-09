@@ -78,13 +78,15 @@ export function App() {
     // Default image resolver if spec.image_url is not set
     let resolvedImage = spec.image_url || spec.report?.image_url;
     if (!resolvedImage) {
-      if (lowerName.includes('biscuit') || lowerName.includes('parle') || lowerName.includes('munch') || lowerName.includes('cake') || lowerName.includes('tadka') || lowerName.includes('chips') || lowerName.includes('lay')) {
+      if (lowerName.includes('corn') || lowerName.includes('kurkure') || lowerName.includes('chips') || lowerName.includes('snack')) {
         resolvedImage = '/banners/banner_goodday.jpg';
-      } else if (lowerName.includes('chocolate') || lowerName.includes('lindt') || lowerName.includes('sweet') || lowerName.includes('cookie')) {
+      } else if (lowerName.includes('biscuit') || lowerName.includes('parle') || lowerName.includes('munch') || lowerName.includes('cake') || lowerName.includes('tadka') || lowerName.includes('lay')) {
+        resolvedImage = '/banners/banner_goodday.jpg';
+      } else if (lowerName.includes('chocolate') || lowerName.includes('lindt') || lowerName.includes('sweet') || lowerName.includes('cookie') || lowerName.includes('chewing') || lowerName.includes('gum')) {
         resolvedImage = '/banners/banner_chocolate.jpg';
-      } else if (lowerName.includes('cream') || lowerName.includes('face') || lowerName.includes('lotion') || lowerName.includes('lip') || lowerName.includes('perfume') || lowerName.includes('powder') || lowerName.includes('cleaner') || lowerCat.includes('cosmetic')) {
+      } else if (lowerName.includes('cream') || lowerName.includes('wash') || lowerName.includes('face') || lowerName.includes('lotion') || lowerName.includes('lip') || lowerName.includes('perfume') || lowerName.includes('powder') || lowerName.includes('cleaner') || lowerCat.includes('cosmetic')) {
         resolvedImage = '/banners/banner_cosmetic.jpg';
-      } else if (lowerName.includes('drink') || lowerName.includes('juice') || lowerName.includes('water') || lowerName.includes('frooti') || lowerName.includes('maaza') || lowerName.includes('carbonated') || lowerCat.includes('beverage')) {
+      } else if (lowerName.includes('drink') || lowerName.includes('juice') || lowerName.includes('water') || lowerName.includes('tropicana') || lowerName.includes('frooti') || lowerName.includes('maaza') || lowerName.includes('carbonated') || lowerCat.includes('beverage')) {
         resolvedImage = '/banners/banner_soda.jpg';
       } else if (lowerName.includes('protein') || lowerName.includes('supplement')) {
         resolvedImage = '/banners/banner_protein.jpg';
@@ -108,30 +110,53 @@ export function App() {
     };
   };
 
-  // Load default preset audit and first packet of specimens in parallel
+  // Load user's recent scans from local cache and backend on startup
   useEffect(() => {
-    // 1. Initial preset audit in parallel
+    // 1. Check local session storage first so user's scans appear with zero delay
+    try {
+      const cached = localStorage.getItem('fairpack_user_scans');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setRecentItems(parsed);
+          setIsInitialLoadingSpecimens(false);
+        }
+      }
+    } catch (e) {
+      console.warn('Local scan cache load error:', e);
+    }
+
+    // 2. Initial preset audit in parallel
     FairPackAPI.runAudit('compliant-biscuit')
       .then((initialReport) => setReport(initialReport))
       .catch((err) => console.warn('Initial preset audit error:', err));
 
-    // 2. Fetch first packet of specimens immediately in decreasing order of upload
+    // 3. Fetch latest specimens directly from Supabase in decreasing order of upload
     FairPackAPI.getStoredSpecimens(8, 0)
       .then((res) => {
         if (res.specimens && res.specimens.length > 0) {
           const dbItems = res.specimens.map(convertSpecimenToItem);
-          // Show database records first (strictly in decreasing order of upload)
-          setRecentItems(dbItems);
+          setRecentItems((prev) => {
+            // Merge user's freshly scanned items with DB records, preserving newest first
+            const existingIds = new Set();
+            const combined: ScannedItem[] = [];
+            for (const item of [...prev, ...dbItems]) {
+              if (item.id && !existingIds.has(item.id)) {
+                existingIds.add(item.id);
+                combined.push(item);
+              }
+            }
+            return combined;
+          });
           setSpecimensOffset(res.specimens.length);
           setHasMoreSpecimens(res.has_more);
         } else {
-          // If no specimens in database yet, fall back to sample presets
-          setRecentItems(RECENT_ITEMS);
+          setRecentItems((prev) => (prev.length > 0 ? prev : RECENT_ITEMS));
         }
       })
       .catch((err) => {
         console.warn('Specimens packet load error:', err);
-        setRecentItems(RECENT_ITEMS);
+        setRecentItems((prev) => (prev.length > 0 ? prev : RECENT_ITEMS));
       })
       .finally(() => {
         setIsInitialLoadingSpecimens(false);
@@ -237,7 +262,15 @@ export function App() {
       report: newReport,
     };
 
-    setRecentItems((prev) => [newItem, ...prev.filter((i) => i.id !== newItem.id)]);
+    setRecentItems((prev) => {
+      const updated = [newItem, ...prev.filter((i) => i.id !== newItem.id)];
+      try {
+        localStorage.setItem('fairpack_user_scans', JSON.stringify(updated.slice(0, 20)));
+      } catch (e) {
+        console.warn('Could not save scan to localStorage:', e);
+      }
+      return updated;
+    });
     setIsDrawerOpen(true);
   };
 

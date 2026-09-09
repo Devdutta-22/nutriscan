@@ -89,14 +89,16 @@ def get_specimens_from_db(limit: int = 10, offset: int = 0) -> List[Dict[str, An
     """
     if is_supabase_enabled():
         try:
-            url = f"{SUPABASE_URL}/rest/v1/specimens?select=*&order=created_at.desc&limit={limit}&offset={offset}"
-            req = urllib.request.Request(url, headers=_supabase_headers(use_service_key=False))
-            with urllib.request.urlopen(req, timeout=8) as resp:
+            cols = "id,audit_id,product_name,product_category,compliance_score,grade,legal_status,status_text,created_at,image_url,panel_count,summary"
+            url = f"{SUPABASE_URL}/rest/v1/specimens?select={cols}&order=created_at.desc&limit={limit}&offset={offset}"
+            req = urllib.request.Request(url, headers=_supabase_headers(use_service_key=True))
+            with urllib.request.urlopen(req, timeout=12) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
                 if isinstance(data, list):
                     return data
         except Exception as e:
             print(f"Supabase fetch error, falling back to local file: {e}")
+
 
     # Local fallback
     if os.path.exists(SPECIMENS_FILE):
