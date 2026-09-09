@@ -1,5 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { X, Loader2, CheckCircle2, XCircle, AlertTriangle, Bot, User, Cpu, Send, ShieldCheck } from 'lucide-react';
+import {
+  X,
+  Loader2,
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  Bot,
+  User,
+  Cpu,
+  Send,
+  ShieldCheck,
+  Sparkles,
+  Scale,
+  Check,
+} from 'lucide-react';
 import { FairPackAPI } from '../../services/api';
 import type { ComplianceStatus } from '../../types/compliance';
 
@@ -10,39 +24,45 @@ interface ValidationModalProps {
   onValidationComplete?: () => void;
 }
 
-const STATUS_COLORS: Record<string, { bg: string; text: string; border: string; icon: React.ReactNode }> = {
+const STATUS_CONFIG: Record<
+  string,
+  { bg: string; text: string; border: string; label: string; icon: React.ReactNode }
+> = {
   COMPLIANT: {
-    bg: 'bg-emerald-50',
+    bg: 'bg-emerald-500/10',
     text: 'text-emerald-700',
-    border: 'border-emerald-200',
-    icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />,
+    border: 'border-emerald-500/30',
+    label: 'COMPLIANT',
+    icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />,
   },
   WARNING: {
-    bg: 'bg-amber-50',
-    text: 'text-amber-700',
-    border: 'border-amber-200',
-    icon: <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />,
+    bg: 'bg-amber-500/10',
+    text: 'text-amber-800',
+    border: 'border-amber-500/30',
+    label: 'WARNING',
+    icon: <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />,
   },
   VIOLATION: {
-    bg: 'bg-rose-50',
+    bg: 'bg-rose-500/10',
     text: 'text-rose-700',
-    border: 'border-rose-200',
-    icon: <XCircle className="w-3.5 h-3.5 text-rose-600" />,
+    border: 'border-rose-500/30',
+    label: 'VIOLATION',
+    icon: <XCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />,
   },
 };
 
-const MANDATE_NAMES: Record<string, string> = {
-  mfg_address: 'Manufacturer Address',
-  generic_name: 'Generic Name',
-  net_quantity: 'Net Quantity',
-  mrp: 'MRP',
-  mfg_date: 'Mfg Date',
-  usp: 'Unit Sale Price',
-  consumer_care: 'Consumer Care',
-  country_of_origin: 'Country of Origin',
-  best_before: 'Best Before / Expiry',
-  language: 'Language Compliance',
-  dual_mrp: 'Dual MRP Detection',
+const MANDATE_NAMES: Record<string, { title: string; subtitle: string }> = {
+  mfg_address: { title: 'Manufacturer Address', subtitle: 'Rule 6(1)(a) & Rule 10' },
+  generic_name: { title: 'Generic or Common Name', subtitle: 'Rule 6(1)(b)' },
+  net_quantity: { title: 'Net Quantity (SI Units)', subtitle: 'Rule 6(1)(c) & Rule 12' },
+  mrp: { title: 'Maximum Retail Price', subtitle: 'Rule 6(1)(d)' },
+  mfg_date: { title: 'Date of Manufacture', subtitle: 'Rule 6(1)(e)' },
+  usp: { title: 'Unit Sale Price (USP)', subtitle: 'Rule 6(1)(s)' },
+  consumer_care: { title: 'Consumer Care Contact', subtitle: 'Rule 6(1)(h)' },
+  country_of_origin: { title: 'Country of Origin', subtitle: 'Rule 6(1)(g)' },
+  best_before: { title: 'Best Before / Expiry', subtitle: 'Rule 6(1)(f)' },
+  language: { title: 'Language Compliance', subtitle: 'Rule 9(4)' },
+  dual_mrp: { title: 'Dual MRP Prohibition', subtitle: 'Rule 18(2A)' },
 };
 
 export const ValidationModal: React.FC<ValidationModalProps> = ({
@@ -68,7 +88,7 @@ export const ValidationModal: React.FC<ValidationModalProps> = ({
       setError(null);
       setSubmitted(false);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, specimen?.id]);
 
   const runValidation = async () => {
@@ -76,7 +96,6 @@ export const ValidationModal: React.FC<ValidationModalProps> = ({
     setLoading(true);
     setError(null);
     try {
-      // First check if already validated
       const existing = await FairPackAPI.getValidationStatus(specimen.id);
       if (existing && existing.referee_results) {
         setValidationData(existing);
@@ -85,12 +104,11 @@ export const ValidationModal: React.FC<ValidationModalProps> = ({
           setSubmitted(true);
         }
       } else {
-        // Run fresh validation
         const result = await FairPackAPI.runValidation(specimen.id);
         setValidationData(result);
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to run validation. Make sure the backend is running.');
+      setError(err.message || 'Failed to run validation. Make sure the backend is connected.');
     } finally {
       setLoading(false);
     }
@@ -100,8 +118,17 @@ export const ValidationModal: React.FC<ValidationModalProps> = ({
     if (submitted) return;
     setHumanVerdicts((prev) => ({
       ...prev,
-      [mandateId]: prev[mandateId] === status ? undefined! : status,
+      [mandateId]: prev[mandateId] === status ? (undefined as any) : status,
     }));
+  };
+
+  const handleMarkAllEngine = () => {
+    if (submitted || !validationData?.engine_results) return;
+    const prefilled: Record<string, ComplianceStatus> = {};
+    for (const r of validationData.engine_results) {
+      prefilled[r.mandate_id] = r.status === 'COMPLIANT' ? 'COMPLIANT' : 'VIOLATION';
+    }
+    setHumanVerdicts(prefilled);
   };
 
   const handleSubmitVerdicts = async () => {
@@ -113,7 +140,7 @@ export const ValidationModal: React.FC<ValidationModalProps> = ({
       setSubmitted(true);
       onValidationComplete?.();
     } catch (err: any) {
-      setError(err.message || 'Failed to submit verdicts');
+      setError(err.message || 'Failed to submit ground truth verdicts');
     } finally {
       setSubmitting(false);
     }
@@ -125,11 +152,12 @@ export const ValidationModal: React.FC<ValidationModalProps> = ({
   const refereeResults = validationData?.referee_results || [];
   const metrics = validationData?.accuracy_metrics;
 
-  // Build merged mandate list
-  const mandateIds = [...new Set([
-    ...engineResults.map((r: any) => r.mandate_id),
-    ...refereeResults.map((r: any) => r.mandate_id),
-  ])];
+  const mandateIds = [
+    ...new Set([
+      ...engineResults.map((r: any) => r.mandate_id),
+      ...refereeResults.map((r: any) => r.mandate_id),
+    ]),
+  ];
 
   const getRefereeForMandate = (id: string) =>
     refereeResults.find((r: any) => r.mandate_id === id);
@@ -137,218 +165,336 @@ export const ValidationModal: React.FC<ValidationModalProps> = ({
   const getEngineForMandate = (id: string) =>
     engineResults.find((r: any) => r.mandate_id === id);
 
-  const allMandatesVerified = mandateIds.length > 0 && mandateIds.every((id) => humanVerdicts[id]);
+  const totalVerifiedCount = mandateIds.filter((id) => humanVerdicts[id]).length;
+  const allMandatesVerified = mandateIds.length > 0 && totalVerifiedCount === mandateIds.length;
 
-  const StatusBadge = ({ status }: { status?: string }) => {
-    if (!status) return <span className="text-xs text-zinc-400">—</span>;
-    const s = STATUS_COLORS[status] || STATUS_COLORS.COMPLIANT;
+  const StatusPill = ({ status }: { status?: string }) => {
+    if (!status) return <span className="text-xs text-zinc-400 font-mono">—</span>;
+    const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.COMPLIANT;
     return (
-      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${s.bg} ${s.text} border ${s.border}`}>
-        {s.icon}
-        {status}
+      <span
+        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wide border ${cfg.bg} ${cfg.text} ${cfg.border}`}
+      >
+        {cfg.icon}
+        <span>{cfg.label}</span>
       </span>
     );
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-2">
-      <div className="bg-white rounded-3xl w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col shadow-2xl">
-        {/* Header */}
-        <div className="p-5 border-b border-zinc-100 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-100 flex items-center justify-center">
-              <ShieldCheck className="w-5 h-5 text-indigo-600" />
+    <div className="fixed inset-0 z-[100] bg-black/75 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200">
+      <div className="bg-[#FAF9F5] rounded-[32px] w-full max-w-5xl max-h-[92vh] overflow-hidden flex flex-col shadow-2xl border-2 border-black">
+        {/* Top Header */}
+        <div className="p-4 sm:p-5 bg-white border-b-2 border-black flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-black text-[#D5FF3F] flex items-center justify-center font-black shadow-sm shrink-0">
+              <Scale className="w-5 h-5 stroke-[2.2]" />
             </div>
             <div>
-              <h2 className="text-lg font-black text-zinc-900">Accuracy Validation</h2>
-              <p className="text-xs text-zinc-500">
-                {specimen?.product_name || specimen?.report?.product_name || 'Unknown Product'} — 3-Column Ground Truth Comparison
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-base sm:text-lg font-black text-zinc-950 tracking-tight">
+                  3-Column Accuracy Ground Truth Benchmarking
+                </h2>
+                <span className="px-2 py-0.5 rounded-full bg-[#D5FF3F] border border-black text-zinc-950 text-[10px] font-black uppercase tracking-wider">
+                  Audit Referee
+                </span>
+              </div>
+              <p className="text-xs text-zinc-500 mt-0.5 flex items-center gap-1.5 font-medium">
+                <span className="font-bold text-zinc-900">
+                  {specimen?.product_name || specimen?.report?.product_name || 'Commodity Specimen'}
+                </span>
+                <span>•</span>
+                <span className="font-mono text-zinc-500">
+                  {specimen?.id || specimen?.audit_id || ''}
+                </span>
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-zinc-100 transition-colors">
-            <X className="w-5 h-5 text-zinc-400" />
+
+          <button
+            onClick={onClose}
+            className="w-9 h-9 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-700 flex items-center justify-center transition-colors cursor-pointer border border-zinc-200"
+            title="Close dialog"
+          >
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-4">
-          {/* Loading State */}
+        {/* Content Area */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+          {/* Loading View */}
           {loading && (
-            <div className="flex flex-col items-center justify-center py-16 gap-3">
-              <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
-              <p className="text-sm font-bold text-zinc-600">Running Independent LLM Referee...</p>
-              <p className="text-xs text-zinc-400">Gemini 2.0 Flash is evaluating this label independently</p>
+            <div className="flex flex-col items-center justify-center py-20 gap-3 bg-white rounded-3xl border-2 border-black/10">
+              <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
+              <p className="text-sm font-black text-zinc-900">Running Independent LLM Referee...</p>
+              <p className="text-xs text-zinc-500 text-center max-w-sm">
+                Google Gemini is independently inspecting each mandate without looking at our
+                engine&apos;s verdicts (Zero Information Leakage).
+              </p>
             </div>
           )}
 
-          {/* Error State */}
+          {/* Error Banner */}
           {error && (
-            <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-sm text-rose-700">
-              <p className="font-bold">Validation Error</p>
-              <p className="text-xs mt-1">{error}</p>
+            <div className="p-4 rounded-2xl bg-rose-50 border-2 border-rose-300 text-sm text-rose-800 flex items-start justify-between gap-3">
+              <div>
+                <p className="font-bold">Validation Pipeline Warning</p>
+                <p className="text-xs mt-0.5">{error}</p>
+              </div>
               <button
                 onClick={runValidation}
-                className="mt-2 px-3 py-1 rounded-lg bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition-colors"
+                className="px-3 py-1.5 rounded-xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition-colors shrink-0 cursor-pointer"
               >
                 Retry
               </button>
             </div>
           )}
 
-          {/* Accuracy Metrics Banner (shown after human verification) */}
+          {/* Post-Verification Accuracy Scoreboard */}
           {submitted && metrics && (
-            <div className="grid grid-cols-4 gap-2.5">
-              {[
-                { label: 'Accuracy', value: metrics.accuracy, color: 'text-indigo-600' },
-                { label: 'Precision', value: metrics.precision, color: 'text-emerald-600' },
-                { label: 'Recall', value: metrics.recall, color: 'text-amber-600' },
-                { label: 'F1-Score', value: metrics.f1_score, color: 'text-rose-600' },
-              ].map((m) => (
-                <div key={m.label} className="bg-zinc-50 rounded-2xl p-3 border border-zinc-100 text-center">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{m.label}</span>
-                  <p className={`text-xl font-black ${m.color} font-mono mt-0.5`}>
-                    {typeof m.value === 'number' ? `${(m.value * 100).toFixed(1)}%` : '—'}
-                  </p>
-                </div>
-              ))}
+            <div className="bg-white rounded-3xl p-4 border-2 border-black shadow-sm space-y-2">
+              <div className="flex items-center justify-between pb-1">
+                <span className="text-xs font-black text-zinc-900 uppercase tracking-wide flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Computed Specimen Accuracy Matrix</span>
+                </span>
+                <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 font-bold">
+                  Verified Ground Truth Saved
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                {[
+                  { label: 'Overall Accuracy', value: metrics.accuracy, color: 'text-indigo-600', bg: 'bg-indigo-50/60', border: 'border-indigo-200' },
+                  { label: 'Precision', value: metrics.precision, color: 'text-emerald-600', bg: 'bg-emerald-50/60', border: 'border-emerald-200' },
+                  { label: 'Recall', value: metrics.recall, color: 'text-amber-600', bg: 'bg-amber-50/60', border: 'border-amber-200' },
+                  { label: 'F1-Score', value: metrics.f1_score, color: 'text-rose-600', bg: 'bg-rose-50/60', border: 'border-rose-200' },
+                ].map((m) => (
+                  <div key={m.label} className={`${m.bg} rounded-2xl p-3 border ${m.border} text-center`}>
+                    <span className="text-[10px] font-black text-zinc-500 uppercase tracking-wider block">
+                      {m.label}
+                    </span>
+                    <p className={`text-2xl font-black ${m.color} font-mono mt-0.5`}>
+                      {typeof m.value === 'number' ? `${(m.value * 100).toFixed(1)}%` : '—'}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
-          {/* 3-Column Comparison Table */}
+          {/* 3-Column Structured Grid Table */}
           {validationData && !loading && (
-            <div className="space-y-2">
-              {/* Column Headers */}
-              <div className="grid grid-cols-[1fr_1.2fr_1.2fr_1fr] gap-2 px-3 py-2 bg-zinc-50 rounded-xl border border-zinc-100 sticky top-0 z-10">
-                <div className="text-[10px] font-black text-zinc-500 uppercase tracking-wider">Mandate</div>
-                <div className="text-[10px] font-black text-zinc-500 uppercase tracking-wider flex items-center gap-1">
-                  <Cpu className="w-3 h-3" /> Our Engine
+            <div className="bg-white rounded-3xl border-2 border-black shadow-sm overflow-hidden flex flex-col">
+              {/* Quick Actions Header Bar */}
+              <div className="p-3 sm:px-4 bg-zinc-50 border-b border-zinc-200 flex items-center justify-between gap-3 text-xs flex-wrap">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[#D5FF3F] ring-2 ring-black" />
+                  <span className="font-bold text-zinc-700">
+                    Review each statutory clause across all 3 referee columns:
+                  </span>
                 </div>
-                <div className="text-[10px] font-black text-zinc-500 uppercase tracking-wider flex items-center gap-1">
-                  <Bot className="w-3 h-3" /> LLM Referee
+                {!submitted && (
+                  <button
+                    onClick={handleMarkAllEngine}
+                    className="text-[11px] font-bold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-3 py-1 rounded-xl transition-colors cursor-pointer"
+                  >
+                    Auto-Fill Column 3 with Engine Verdicts
+                  </button>
+                )}
+              </div>
+
+              {/* Table Column Header (Fixed Symmetric Widths) */}
+              <div className="grid grid-cols-12 gap-2 sm:gap-3 p-3 sm:px-4 bg-zinc-100/90 border-b-2 border-black text-[11px] font-black uppercase tracking-wider text-zinc-700">
+                <div className="col-span-12 sm:col-span-3">Statutory Mandate</div>
+                <div className="col-span-12 sm:col-span-3 flex items-center gap-1.5 text-zinc-900">
+                  <Cpu className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Column 1: Our Engine</span>
                 </div>
-                <div className="text-[10px] font-black text-zinc-500 uppercase tracking-wider flex items-center gap-1">
-                  <User className="w-3 h-3" /> Your Verdict
+                <div className="col-span-12 sm:col-span-3 flex items-center gap-1.5 text-zinc-900">
+                  <Bot className="w-3.5 h-3.5 text-violet-600" />
+                  <span>Column 2: LLM Referee</span>
+                </div>
+                <div className="col-span-12 sm:col-span-3 flex items-center gap-1.5 text-zinc-900">
+                  <User className="w-3.5 h-3.5 text-black" />
+                  <span>Column 3: Ground Truth</span>
                 </div>
               </div>
 
               {/* Mandate Rows */}
-              {mandateIds.map((mandateId) => {
-                const engine = getEngineForMandate(mandateId);
-                const referee = getRefereeForMandate(mandateId);
-                const humanVerdict = humanVerdicts[mandateId];
-                const mandateName = engine?.name || MANDATE_NAMES[mandateId] || mandateId;
+              <div className="divide-y divide-zinc-200">
+                {mandateIds.map((mandateId, index) => {
+                  const engine = getEngineForMandate(mandateId);
+                  const referee = getRefereeForMandate(mandateId);
+                  const humanVerdict = humanVerdicts[mandateId];
+                  const info = MANDATE_NAMES[mandateId] || {
+                    title: engine?.name || mandateId,
+                    subtitle: engine?.rule || 'LMPC Rule',
+                  };
 
-                // Determine if engine and referee agree
-                const agree = engine?.status === referee?.status;
+                  // Disagreement highlight
+                  const agree = engine?.status === referee?.status;
 
-                return (
-                  <div
-                    key={mandateId}
-                    className={`grid grid-cols-[1fr_1.2fr_1.2fr_1fr] gap-2 px-3 py-3 rounded-xl border transition-all ${
-                      agree ? 'border-zinc-100 bg-white' : 'border-amber-200 bg-amber-50/30'
-                    }`}
-                  >
-                    {/* Mandate Name */}
-                    <div>
-                      <p className="text-xs font-bold text-zinc-800">{mandateName}</p>
-                      <p className="text-[10px] text-zinc-400 font-mono">{engine?.rule || ''}</p>
+                  return (
+                    <div
+                      key={mandateId}
+                      className={`grid grid-cols-12 gap-2 sm:gap-3 p-3 sm:px-4 items-center transition-colors ${
+                        index % 2 === 0 ? 'bg-white' : 'bg-zinc-50/50'
+                      } ${!agree ? 'ring-1 ring-inset ring-amber-300 bg-amber-50/20' : ''}`}
+                    >
+                      {/* Mandate Column */}
+                      <div className="col-span-12 sm:col-span-3 space-y-0.5">
+                        <p className="text-xs font-black text-zinc-900 leading-snug">
+                          {info.title}
+                        </p>
+                        <p className="text-[10px] font-mono font-semibold text-zinc-500">
+                          {info.subtitle}
+                        </p>
+                      </div>
+
+                      {/* Column 1: Our Engine */}
+                      <div className="col-span-12 sm:col-span-3 space-y-1.5">
+                        <StatusPill status={engine?.status} />
+                        <p className="text-[10px] text-zinc-600 leading-snug line-clamp-2">
+                          {engine?.reason || 'Verified under deterministic engine.'}
+                        </p>
+                      </div>
+
+                      {/* Column 2: LLM Referee */}
+                      <div className="col-span-12 sm:col-span-3 space-y-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <StatusPill status={referee?.status} />
+                          {!agree && (
+                            <span
+                              className="text-[9px] font-mono font-black text-amber-700 bg-amber-100 px-1.5 py-0.2 rounded"
+                              title="Engine and Referee disagree"
+                            >
+                              Mismatch
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-zinc-600 leading-snug line-clamp-2">
+                          {referee?.reasoning || referee?.reason || 'Evaluated independently.'}
+                        </p>
+                      </div>
+
+                      {/* Column 3: Ground Truth (Human Inspector Verdict) */}
+                      <div className="col-span-12 sm:col-span-3 flex items-center gap-2">
+                        {submitted ? (
+                          <div className="w-full">
+                            <StatusPill status={humanVerdict} />
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-2 gap-1.5 w-full">
+                            <button
+                              type="button"
+                              onClick={() => toggleVerdict(mandateId, 'COMPLIANT')}
+                              className={`py-1.5 px-2 rounded-xl text-[10px] font-black border transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                                humanVerdict === 'COMPLIANT'
+                                  ? 'bg-emerald-500 text-white border-emerald-600 shadow-sm scale-[1.02]'
+                                  : 'bg-white hover:bg-emerald-50 text-emerald-700 border-zinc-300'
+                              }`}
+                            >
+                              <Check className="w-3 h-3 stroke-[3]" />
+                              <span>Pass</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => toggleVerdict(mandateId, 'VIOLATION')}
+                              className={`py-1.5 px-2 rounded-xl text-[10px] font-black border transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                                humanVerdict === 'VIOLATION'
+                                  ? 'bg-rose-500 text-white border-rose-600 shadow-sm scale-[1.02]'
+                                  : 'bg-white hover:bg-rose-50 text-rose-700 border-zinc-300'
+                              }`}
+                            >
+                              <X className="w-3 h-3 stroke-[3]" />
+                              <span>Fail</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
-
-                    {/* Column 1: Our Engine */}
-                    <div className="space-y-1">
-                      <StatusBadge status={engine?.status} />
-                      <p className="text-[10px] text-zinc-500 leading-snug line-clamp-2">
-                        {engine?.reason || ''}
-                      </p>
-                    </div>
-
-                    {/* Column 2: LLM Referee */}
-                    <div className="space-y-1">
-                      <StatusBadge status={referee?.status} />
-                      <p className="text-[10px] text-zinc-500 leading-snug line-clamp-2">
-                        {referee?.reasoning || referee?.reason || ''}
-                      </p>
-                    </div>
-
-                    {/* Column 3: Human Verdict */}
-                    <div className="flex flex-col gap-1">
-                      {submitted ? (
-                        <StatusBadge status={humanVerdict} />
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => toggleVerdict(mandateId, 'COMPLIANT')}
-                            className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition-all ${
-                              humanVerdict === 'COMPLIANT'
-                                ? 'bg-emerald-500 text-white border-emerald-600 scale-105'
-                                : 'bg-white text-emerald-600 border-emerald-200 hover:bg-emerald-50'
-                            }`}
-                          >
-                            ✅ Compliant
-                          </button>
-                          <button
-                            onClick={() => toggleVerdict(mandateId, 'VIOLATION')}
-                            className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition-all ${
-                              humanVerdict === 'VIOLATION'
-                                ? 'bg-rose-500 text-white border-rose-600 scale-105'
-                                : 'bg-white text-rose-600 border-rose-200 hover:bg-rose-50'
-                            }`}
-                          >
-                            ❌ Violation
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
 
-        {/* Footer */}
-        {validationData && !loading && !submitted && (
-          <div className="p-4 border-t border-zinc-100 flex items-center justify-between shrink-0">
-            <p className="text-xs text-zinc-500">
-              {Object.keys(humanVerdicts).filter(k => humanVerdicts[k]).length} / {mandateIds.length} mandates verified
-            </p>
-            <button
-              onClick={handleSubmitVerdicts}
-              disabled={!allMandatesVerified || submitting}
-              className={`px-5 py-2.5 rounded-2xl font-black text-xs flex items-center gap-2 transition-all ${
-                allMandatesVerified && !submitting
-                  ? 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95 shadow-lg'
-                  : 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
-              }`}
-            >
-              {submitting ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <Send className="w-3.5 h-3.5" />
-              )}
-              Submit Human Verification
-            </button>
-          </div>
-        )}
+        {/* Footer Bar */}
+        <div className="p-4 sm:p-5 bg-white border-t-2 border-black flex items-center justify-between shrink-0 gap-3 flex-wrap">
+          {validationData && !loading && !submitted ? (
+            <>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`w-3 h-3 rounded-full ${
+                    allMandatesVerified ? 'bg-emerald-500' : 'bg-amber-400 animate-pulse'
+                  }`}
+                />
+                <p className="text-xs font-bold text-zinc-700">
+                  <span className="font-black text-zinc-950 font-mono text-sm">
+                    {totalVerifiedCount}
+                  </span>{' '}
+                  of {mandateIds.length} mandates marked
+                  {!allMandatesVerified && (
+                    <span className="text-zinc-400 font-normal"> (mark all to submit)</span>
+                  )}
+                </p>
+              </div>
 
-        {/* Submitted success */}
-        {submitted && (
-          <div className="p-4 border-t border-emerald-100 bg-emerald-50/50 flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <p className="text-xs font-bold text-emerald-700">
-                Ground truth verification submitted successfully
-              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-2.5 rounded-2xl border border-zinc-300 text-zinc-700 font-bold text-xs hover:bg-zinc-50 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSubmitVerdicts}
+                  disabled={!allMandatesVerified || submitting}
+                  className={`px-5 py-2.5 rounded-2xl font-black text-xs flex items-center gap-2 transition-all cursor-pointer ${
+                    allMandatesVerified && !submitting
+                      ? 'bg-black text-[#D5FF3F] hover:bg-zinc-800 active:scale-95 shadow-md'
+                      : 'bg-zinc-200 text-zinc-400 cursor-not-allowed'
+                  }`}
+                >
+                  {submitting ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-[#D5FF3F]" />
+                  ) : (
+                    <Send className="w-4 h-4 text-[#D5FF3F]" />
+                  )}
+                  <span>Submit Ground Truth Verification</span>
+                </button>
+              </div>
+            </>
+          ) : submitted ? (
+            <>
+              <div className="flex items-center gap-2 text-emerald-800 text-xs font-bold">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span>Verification record permanently logged and metrics benchmarked.</span>
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-6 py-2.5 rounded-2xl bg-black text-[#D5FF3F] font-black text-xs hover:bg-zinc-800 transition-colors cursor-pointer shadow-sm"
+              >
+                Close Window
+              </button>
+            </>
+          ) : (
+            <div className="ml-auto">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 rounded-xl bg-zinc-100 text-zinc-600 font-bold text-xs"
+              >
+                Close
+              </button>
             </div>
-            <button
-              onClick={onClose}
-              className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors"
-            >
-              Done
-            </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
