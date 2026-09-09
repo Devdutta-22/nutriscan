@@ -8,6 +8,7 @@ import os
 import json
 import base64
 import uuid
+import re
 import urllib.request
 import urllib.error
 from typing import List, Dict, Any, Optional
@@ -44,19 +45,14 @@ def is_supabase_enabled() -> bool:
 def is_r2_enabled() -> bool:
     return bool(R2_ACCOUNT_ID and R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY and R2_BUCKET_NAME)
 
-async def upload_image_to_r2(file_bytes: bytes, filename: str, content_type: str = "image/jpeg") -> Optional[str]:
-    """
-    Uploads an image file to Cloudflare R2 and returns its public CDN URL.
-    """
+def get_r2_client():
     if not is_r2_enabled():
         return None
-
     try:
         import boto3
         from botocore.config import Config
-
         endpoint_url = f"https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
-        s3 = boto3.client(
+        return boto3.client(
             "s3",
             endpoint_url=endpoint_url,
             aws_access_key_id=R2_ACCESS_KEY_ID,
@@ -64,34 +60,53 @@ async def upload_image_to_r2(file_bytes: bytes, filename: str, content_type: str
             config=Config(signature_version="s3v4"),
             region_name="auto"
         )
+    except Exception as e:
+        print(f"Error initializing R2 client: {e}")
+        return None
 
+def get_image_from_r2(object_key: str) -> Optional[tuple[bytes, str]]:
+    """
+    Downloads an object from Cloudflare R2 and returns (bytes, content_type).
+    """
+    client = get_r2_client()
+    if not client:
+        return None
+    try:
+        resp = client.get_object(Bucket=R2_BUCKET_NAME, Key=object_key)
+        data = resp["Body"].read()
+        content_type = resp.get("ContentType", "image/jpeg")
+        return data, content_type
+    except Exception as e:
+        print(f"Error fetching {object_key} from R2: {e}")
+        return None
+
+async def upload_image_to_r2(file_bytes: bytes, filename: str, content_type: str = "image/jpeg") -> Optional[str]:
+    """
+    Uploads an image file to Cloudflare R2 and returns its permanent URL.
+    """
+    client = get_r2_client()
+    if not client:
+        return None
+
+    try:
         ext = filename.split(".")[-1] if "." in filename else "jpg"
-        object_key = f"specimens/{uuid.uuid4().hex[:12]}_{filename}"
+        clean_name = re.sub(r'[^a-zA-Z0-9_\.-]', '_', filename)
+        object_key = f"specimens/{uuid.uuid4().hex[:12]}_{clean_name}"
 
-        s3.put_object(
+        client.put_object(
             Bucket=R2_BUCKET_NAME,
             Key=object_key,
             Body=file_bytes,
             ContentType=content_type,
         )
 
+        # 1. If custom domain is set (e.g. cdn.domain.com), use it directly
         if R2_PUBLIC_DOMAIN and not R2_PUBLIC_DOMAIN.endswith(".r2.dev"):
             return f"{R2_PUBLIC_DOMAIN}/{object_key}"
 
-        # Generate a long-lived presigned URL (valid for 7 days) so browsers can directly render it
-        try:
-            presigned_url = s3.generate_presigned_url(
-                "get_object",
-                Params={"Bucket": R2_BUCKET_NAME, "Key": object_key},
-                ExpiresIn=604800,  # 7 days (maximum supported by S3 v4)
-            )
-            return presigned_url
-        except Exception:
-            pass
-
-        if R2_PUBLIC_DOMAIN:
-            return f"{R2_PUBLIC_DOMAIN}/{object_key}"
-        return f"{endpoint_url}/{R2_BUCKET_NAME}/{object_key}"
+        # 2. Permanent non-expiring proxy route through our API
+        # Any browser or frontend can load this URL forever!
+        return f"/api/audit/images/{object_key}"
     except Exception as e:
         print(f"Cloudflare R2 upload error: {e}")
         return None

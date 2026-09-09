@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Query
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Query, Response
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 import json
@@ -13,11 +13,32 @@ from app.api.storage import (
     insert_specimen_to_db,
     delete_specimen_from_db,
     upload_image_to_r2,
+    get_image_from_r2,
     is_r2_enabled,
     is_supabase_enabled
 )
 
 router = APIRouter(prefix="/audit", tags=["Audit"])
+
+@router.get("/images/{file_path:path}")
+async def get_r2_image(file_path: str):
+    """
+    Streams raw image bytes directly from Cloudflare R2 bucket.
+    This provides permanent, non-expiring image URLs with CDN caching headers.
+    """
+    result = get_image_from_r2(file_path)
+    if not result:
+        raise HTTPException(status_code=404, detail="Image not found in storage bucket")
+
+    data, content_type = result
+    return Response(
+        content=data,
+        media_type=content_type,
+        headers={
+            "Cache-Control": "public, max-age=31536000, immutable",
+            "Access-Control-Allow-Origin": "*"
+        }
+    )
 
 class AuditRequest(BaseModel):
     preset_id: Optional[str] = None
