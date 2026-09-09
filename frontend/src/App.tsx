@@ -43,7 +43,8 @@ export function App() {
   const [isValidationOpen, setIsValidationOpen] = useState<boolean>(false);
   const [validationSpecimen, setValidationSpecimen] = useState<any>(null);
   const [isMobileFrameMode, setIsMobileFrameMode] = useState<boolean>(false);
-  const [recentItems, setRecentItems] = useState<ScannedItem[]>(RECENT_ITEMS);
+  const [recentItems, setRecentItems] = useState<ScannedItem[]>([]);
+  const [isInitialLoadingSpecimens, setIsInitialLoadingSpecimens] = useState<boolean>(true);
   const [hasMoreSpecimens, setHasMoreSpecimens] = useState<boolean>(false);
   const [isLoadingMoreSpecimens, setIsLoadingMoreSpecimens] = useState<boolean>(false);
   const [specimensOffset, setSpecimensOffset] = useState<number>(0);
@@ -114,17 +115,27 @@ export function App() {
       .then((initialReport) => setReport(initialReport))
       .catch((err) => console.warn('Initial preset audit error:', err));
 
-    // 2. Fetch first packet of 8 specimens immediately for instant display
+    // 2. Fetch first packet of specimens immediately in decreasing order of upload
     FairPackAPI.getStoredSpecimens(8, 0)
       .then((res) => {
         if (res.specimens && res.specimens.length > 0) {
           const dbItems = res.specimens.map(convertSpecimenToItem);
-          setRecentItems([...dbItems, ...RECENT_ITEMS]);
+          // Show database records first (strictly in decreasing order of upload)
+          setRecentItems(dbItems);
           setSpecimensOffset(res.specimens.length);
           setHasMoreSpecimens(res.has_more);
+        } else {
+          // If no specimens in database yet, fall back to sample presets
+          setRecentItems(RECENT_ITEMS);
         }
       })
-      .catch((err) => console.warn('Specimens packet load error:', err));
+      .catch((err) => {
+        console.warn('Specimens packet load error:', err);
+        setRecentItems(RECENT_ITEMS);
+      })
+      .finally(() => {
+        setIsInitialLoadingSpecimens(false);
+      });
 
     // Check if opened via PWA Shortcut action or query params
     const params = new URLSearchParams(window.location.search);
@@ -306,6 +317,7 @@ export function App() {
                 <div className="pt-2">
                   <RecentlyScanned
                     items={recentItems}
+                    isInitialLoading={isInitialLoadingSpecimens}
                     onSelectItem={handleSelectItem}
                     onSeeAll={() => setActiveTab('category')}
                     onDeleteItem={handleDeleteItem}
@@ -350,6 +362,7 @@ export function App() {
                 {/* 1. Recent Scans above Active Audit Result in mobile as well */}
                 <RecentlyScanned
                   items={recentItems}
+                  isInitialLoading={isInitialLoadingSpecimens}
                   onSelectItem={handleSelectItem}
                   onSeeAll={() => setActiveTab('category')}
                   onDeleteItem={handleDeleteItem}

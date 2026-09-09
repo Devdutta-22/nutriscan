@@ -28,3 +28,9 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #BBB8AD;
 }
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
