@@ -75,6 +75,20 @@ async def upload_image_to_r2(file_bytes: bytes, filename: str, content_type: str
             ContentType=content_type,
         )
 
+        if R2_PUBLIC_DOMAIN and not R2_PUBLIC_DOMAIN.endswith(".r2.dev"):
+            return f"{R2_PUBLIC_DOMAIN}/{object_key}"
+
+        # Generate a long-lived presigned URL (valid for 7 days) so browsers can directly render it
+        try:
+            presigned_url = s3.generate_presigned_url(
+                "get_object",
+                Params={"Bucket": R2_BUCKET_NAME, "Key": object_key},
+                ExpiresIn=604800,  # 7 days (maximum supported by S3 v4)
+            )
+            return presigned_url
+        except Exception:
+            pass
+
         if R2_PUBLIC_DOMAIN:
             return f"{R2_PUBLIC_DOMAIN}/{object_key}"
         return f"{endpoint_url}/{R2_BUCKET_NAME}/{object_key}"
