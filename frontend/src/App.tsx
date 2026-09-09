@@ -302,35 +302,36 @@ export function App() {
                   onOpenGovPortal={() => setIsGovDashboardOpen(true)}
                 />
 
-                {/* Two-Column Inspection & Product Tray Section */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start pt-2">
-                  {/* Left Column (Desktop 6 cols): Active Audit Result Snapshot & Category Browse */}
-                  <div className="lg:col-span-6 space-y-6">
+                {/* 1. Horizontal Minimalist Recent Scans Carousel (Top Priority) */}
+                <div className="pt-2">
+                  <RecentlyScanned
+                    items={recentItems}
+                    onSelectItem={handleSelectItem}
+                    onSeeAll={() => setActiveTab('category')}
+                    onDeleteItem={handleDeleteItem}
+                    onLoadMore={handleLoadMoreSpecimens}
+                    hasMore={hasMoreSpecimens}
+                    isLoadingMore={isLoadingMoreSpecimens}
+                  />
+                </div>
+
+                {/* 2. Active Audit Result & Visual Breakdown with Category Browse underneath */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start pt-1">
+                  <div className="lg:col-span-7 space-y-6">
                     <TodaySnapshot
                       report={report}
                       onViewAll={() => setActiveTab('insights')}
                       onInspect={() => setIsDrawerOpen(true)}
                     />
-                    <CategoryBrowse onSelectCategory={() => setActiveTab('category')} />
                   </div>
-
-                  {/* Right Column (Desktop 6 cols): Recently Scanned Specimen Tray */}
-                  <div className="lg:col-span-6 space-y-6">
-                    <RecentlyScanned
-                      items={recentItems}
-                      onSelectItem={handleSelectItem}
-                      onSeeAll={() => setActiveTab('category')}
-                      onDeleteItem={handleDeleteItem}
-                      onLoadMore={handleLoadMoreSpecimens}
-                      hasMore={hasMoreSpecimens}
-                      isLoadingMore={isLoadingMoreSpecimens}
-                    />
+                  <div className="lg:col-span-5 space-y-6">
+                    <CategoryBrowse onSelectCategory={() => setActiveTab('category')} />
                   </div>
                 </div>
               </div>
             ) : (
               /* Mobile Frame Layout (matches mobile stream) */
-              <div className="space-y-3 pt-1">
+              <div className="space-y-4 pt-1">
                 <NutriHero />
                 <div className="w-full">
                   <Interactive3DCard
@@ -345,12 +346,8 @@ export function App() {
                   onOpenTracker={() => setIsTrackerOpen(true)}
                   onOpenGovPortal={() => setIsGovDashboardOpen(true)}
                 />
-                <TodaySnapshot
-                  report={report}
-                  onViewAll={() => setActiveTab('insights')}
-                  onInspect={() => setIsDrawerOpen(true)}
-                />
-                <CategoryBrowse onSelectCategory={() => setActiveTab('category')} />
+
+                {/* 1. Recent Scans above Active Audit Result in mobile as well */}
                 <RecentlyScanned
                   items={recentItems}
                   onSelectItem={handleSelectItem}
@@ -360,6 +357,14 @@ export function App() {
                   hasMore={hasMoreSpecimens}
                   isLoadingMore={isLoadingMoreSpecimens}
                 />
+
+                {/* 2. Active Audit Result & Visual Breakdown */}
+                <TodaySnapshot
+                  report={report}
+                  onViewAll={() => setActiveTab('insights')}
+                  onInspect={() => setIsDrawerOpen(true)}
+                />
+                <CategoryBrowse onSelectCategory={() => setActiveTab('category')} />
               </div>
             )}
 

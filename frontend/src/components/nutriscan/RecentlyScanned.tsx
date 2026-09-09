@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Wheat, Coffee, Cookie, Image as ImageIcon, Trash2, Database, ChevronDown, RefreshCw } from 'lucide-react';
+import { Image as ImageIcon, Trash2, Database, ChevronLeft, ChevronRight, Plus, CheckCircle2 } from 'lucide-react';
 import { AuditReport } from '../../types/compliance';
 
 export interface ScannedItem {
@@ -37,8 +37,6 @@ export const RECENT_ITEMS: ScannedItem[] = [
     grade: 'A+',
     gradeBg: 'bg-[#D5FF3F]',
     gradeColor: 'text-zinc-950 font-black',
-    icon: Wheat,
-    iconBg: 'bg-[#F4FBD6] text-zinc-900',
     presetId: 'compliant-biscuit',
     image_url: '/banners/banner_goodday.jpg',
   },
@@ -50,8 +48,6 @@ export const RECENT_ITEMS: ScannedItem[] = [
     grade: 'C',
     gradeBg: 'bg-[#FF2A85]',
     gradeColor: 'text-white font-black',
-    icon: Coffee,
-    iconBg: 'bg-[#D7F9FB] text-zinc-900',
     presetId: 'violating-face-cream',
     image_url: '/banners/banner_cosmetic.jpg',
   },
@@ -63,46 +59,10 @@ export const RECENT_ITEMS: ScannedItem[] = [
     grade: 'B-',
     gradeBg: 'bg-[#8B5CF6]',
     gradeColor: 'text-white font-black',
-    icon: Cookie,
-    iconBg: 'bg-[#FDE2EC] text-zinc-900',
     presetId: 'imported-chocolate',
     image_url: '/banners/banner_chocolate.jpg',
   },
 ];
-
-const ItemThumbnail: React.FC<{
-  imageUrl?: string;
-  name: string;
-  IconComponent: any;
-  iconBg?: string;
-}> = ({ imageUrl, name, IconComponent, iconBg }) => {
-  const [hasError, setHasError] = useState(false);
-
-  if (imageUrl && !hasError) {
-    return (
-      <div className="w-11 h-11 rounded-xl bg-zinc-100 border border-zinc-200 overflow-hidden shrink-0 shadow-inner group-hover:scale-105 transition-transform flex items-center justify-center relative">
-        <img
-          src={imageUrl}
-          alt={name}
-          className="w-full h-full object-cover"
-          loading="lazy"
-          onError={() => setHasError(true)}
-        />
-        <span className="absolute bottom-0.5 right-0.5 text-[8px] font-mono text-[#D5FF3F] font-black px-1 rounded bg-black/80">
-          IMG
-        </span>
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className={`w-11 h-11 rounded-2xl ${iconBg || 'bg-zinc-100 text-zinc-800'} flex items-center justify-center shrink-0 shadow-inner group-hover:scale-105 transition-transform`}
-    >
-      <IconComponent className="w-5 h-5 stroke-[2.2]" />
-    </div>
-  );
-};
 
 export const RecentlyScanned: React.FC<RecentlyScannedProps> = ({
   items = RECENT_ITEMS,
@@ -114,6 +74,7 @@ export const RecentlyScanned: React.FC<RecentlyScannedProps> = ({
   isLoadingMore = false,
 }) => {
   const [filterMode, setFilterMode] = useState<'all' | 'uploaded'>('all');
+  const scrollRef = React.useRef<HTMLDivElement>(null);
 
   const displayedItems = items.filter((item) => {
     if (filterMode === 'uploaded') {
@@ -124,145 +85,176 @@ export const RecentlyScanned: React.FC<RecentlyScannedProps> = ({
 
   const uploadedCount = items.filter((i) => i.is_database_record || Boolean(i.image_url)).length;
 
+  const handleScroll = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const scrollAmount = direction === 'left' ? -280 : 280;
+      scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
+
   return (
-    <div className="pt-4 pb-20">
+    <div className="space-y-3">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h3 className="text-base font-extrabold text-zinc-900 tracking-tight flex items-center gap-2">
-            <span>Database Records & Specimens</span>
-            <span className="text-[10px] font-mono bg-zinc-100 text-zinc-700 border border-zinc-200 px-2 py-0.5 rounded-full font-bold">
-              {items.length} records
-            </span>
+          <span className="w-2 h-2 rounded-full bg-zinc-900" />
+          <h3 className="text-base font-extrabold text-zinc-900 tracking-tight">
+            Recent Scans
           </h3>
+          <span className="text-[10px] font-mono font-bold bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-full border border-zinc-200">
+            {displayedItems.length}
+          </span>
         </div>
 
-        {/* Filter chips & View all button */}
         <div className="flex items-center gap-2">
-          <div className="bg-white p-0.5 rounded-xl border border-zinc-200/90 shadow-2xs flex items-center text-[10px] font-mono font-bold">
+          {/* Filter Pills */}
+          <div className="bg-zinc-100/80 p-0.5 rounded-xl flex items-center text-[10px] font-bold">
             <button
               onClick={() => setFilterMode('all')}
               className={`px-2.5 py-1 rounded-lg transition-all ${
                 filterMode === 'all'
-                  ? 'bg-zinc-900 text-white shadow-xs'
-                  : 'text-zinc-600 hover:text-zinc-900'
+                  ? 'bg-white text-zinc-900 shadow-xs'
+                  : 'text-zinc-500 hover:text-zinc-800'
               }`}
             >
-              All ({items.length})
+              All
             </button>
             <button
               onClick={() => setFilterMode('uploaded')}
               className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${
                 filterMode === 'uploaded'
-                  ? 'bg-[#0E1118] text-[#D5FF3F] shadow-xs'
-                  : 'text-zinc-600 hover:text-zinc-900'
+                  ? 'bg-white text-zinc-900 shadow-xs'
+                  : 'text-zinc-500 hover:text-zinc-800'
               }`}
             >
-              <Database className="w-3 h-3 text-[#D5FF3F]" />
-              <span>Uploaded ({uploadedCount})</span>
+              <Database className="w-2.5 h-2.5 text-indigo-600" />
+              <span>Saved ({uploadedCount})</span>
+            </button>
+          </div>
+
+          {/* Navigation scroll arrows (hidden on small screens) */}
+          <div className="hidden sm:flex items-center gap-1">
+            <button
+              onClick={() => handleScroll('left')}
+              className="w-7 h-7 rounded-xl bg-white border border-zinc-200 flex items-center justify-center text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50 active:scale-95 transition-all shadow-2xs"
+              title="Scroll left"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => handleScroll('right')}
+              className="w-7 h-7 rounded-xl bg-white border border-zinc-200 flex items-center justify-center text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50 active:scale-95 transition-all shadow-2xs"
+              title="Scroll right"
+            >
+              <ChevronRight className="w-4 h-4" />
             </button>
           </div>
 
           {onSeeAll && (
             <button
               onClick={onSeeAll}
-              className="text-xs font-black text-[#8B5CF6] uppercase tracking-wider hover:opacity-80 transition-opacity"
+              className="text-xs font-black text-zinc-600 hover:text-zinc-900 uppercase tracking-wider transition-colors ml-1"
             >
-              SEE ALL
+              View All
             </button>
           )}
         </div>
       </div>
 
-      {/* List */}
-      <div className="space-y-2.5">
+      {/* Horizontal Scrollable Carousel of Square Product Cards */}
+      <div
+        ref={scrollRef}
+        className="flex items-stretch gap-3 overflow-x-auto pb-2 scrollbar-none snap-x snap-mandatory -mx-1 px-1 scroll-smooth"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
         {displayedItems.length === 0 ? (
-          <div className="bg-white border border-zinc-200/90 rounded-2xl p-6 text-center text-zinc-500 font-mono text-xs shadow-2xs">
-            <p className="font-bold text-zinc-800">No uploaded label specimens found yet.</p>
-            <p className="text-[11px] text-zinc-500 mt-1">
-              Upload a label image from the top button to store it permanently into the database.
-            </p>
+          <div className="w-full bg-zinc-50 border border-dashed border-zinc-200 rounded-3xl p-8 text-center text-zinc-400 font-mono text-xs">
+            No scanned specimens in this view.
           </div>
         ) : (
-          displayedItems.map((item) => {
-            const IconComponent = item.icon || ImageIcon;
-
-            return (
-              <div
-                key={item.id}
-                onClick={() => onSelectItem(item)}
-                className="bg-white rounded-2xl p-3 sm:p-3.5 border border-zinc-200/90 shadow-sm flex items-center justify-between gap-3 cursor-pointer hover:border-zinc-300 hover:shadow-md active:scale-[0.99] transition-all group relative overflow-hidden"
-              >
-                {/* Left: Thumbnail or Icon and Details */}
-                <div className="flex items-center gap-3 min-w-0">
-                  <ItemThumbnail
-                    imageUrl={item.image_url}
-                    name={item.name}
-                    IconComponent={IconComponent}
-                    iconBg={item.iconBg}
-                  />
-
-                  <div className="truncate">
-                    <div className="flex items-center gap-1.5 truncate">
-                      <h4 className="font-extrabold text-[13px] sm:text-sm text-zinc-900 leading-snug truncate">
-                        {item.name}
-                      </h4>
-                      {item.is_database_record && (
-                        <span className="text-[9px] font-mono font-bold bg-[#D5FF3F] text-zinc-950 px-1.5 py-0.2 rounded-full shrink-0">
-                          DB
-                        </span>
-                      )}
+          displayedItems.map((item) => (
+            <div
+              key={item.id}
+              onClick={() => onSelectItem(item)}
+              className="group snap-start shrink-0 w-44 sm:w-52 bg-white rounded-3xl p-3 border border-zinc-200/90 hover:border-zinc-300 hover:shadow-md active:scale-[0.98] transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden"
+            >
+              {/* Top: Square Product Image & Badges */}
+              <div className="space-y-2.5">
+                <div className="w-full aspect-square rounded-2xl bg-zinc-100 overflow-hidden relative border border-zinc-100 shadow-inner flex items-center justify-center">
+                  {item.image_url ? (
+                    <img
+                      src={item.image_url}
+                      alt={item.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-zinc-50 text-zinc-400">
+                      <ImageIcon className="w-10 h-10 stroke-[1.5]" />
                     </div>
-                    <p className="text-[11px] font-medium text-zinc-500 mt-0.5 truncate">
-                      {item.category} · {item.timeAgo}
-                    </p>
-                  </div>
-                </div>
+                  )}
 
-                {/* Right: Grade Badge & Delete Button */}
-                <div className="flex items-center gap-2 shrink-0">
+                  {/* Top-Right Grade Tag */}
                   <span
-                    className={`inline-flex items-center justify-center px-2.5 py-1 min-w-[32px] h-[28px] rounded-full text-xs shadow-xs ${item.gradeBg} ${item.gradeColor}`}
+                    className={`absolute top-2 right-2 px-2.5 py-0.5 rounded-full text-[11px] font-black shadow-xs ${item.gradeBg} ${item.gradeColor}`}
                   >
                     {item.grade}
                   </span>
 
-                  {onDeleteItem && item.is_database_record && (
-                    <button
-                      onClick={(e) => onDeleteItem(item.id, e)}
-                      className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                      title="Delete record from database"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                  {/* Top-Left Database Indicator (if stored) */}
+                  {item.is_database_record && (
+                    <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded-md bg-black/75 text-[#D5FF3F] text-[9px] font-mono font-bold tracking-wider backdrop-blur-xs">
+                      DB
+                    </span>
                   )}
                 </div>
+
+                {/* Middle: Product Name & Category */}
+                <div className="space-y-0.5">
+                  <h4 className="font-extrabold text-[13px] sm:text-sm text-zinc-900 leading-snug line-clamp-2 group-hover:text-indigo-600 transition-colors">
+                    {item.name}
+                  </h4>
+                  <p className="text-[11px] font-medium text-zinc-400 truncate">
+                    {item.category}
+                  </p>
+                </div>
               </div>
-            );
-          })
+
+              {/* Bottom: Timestamp & Delete Action */}
+              <div className="pt-2.5 mt-2 border-t border-zinc-100 flex items-center justify-between">
+                <span className="text-[10px] font-mono font-medium text-zinc-400">
+                  {item.timeAgo}
+                </span>
+
+                {onDeleteItem && item.is_database_record && (
+                  <button
+                    onClick={(e) => onDeleteItem(item.id, e)}
+                    className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 transition-all opacity-0 group-hover:opacity-100"
+                    title="Delete record"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+          ))
         )}
 
-        {/* Load More Packet Button */}
+        {/* Optional "Load More" Card at end of carousel */}
         {onLoadMore && hasMore && (
-          <div className="pt-2 flex justify-center">
-            <button
-              onClick={onLoadMore}
-              disabled={isLoadingMore}
-              className="w-full py-2.5 px-4 rounded-xl bg-white border border-zinc-300 hover:border-zinc-800 text-zinc-900 font-bold text-xs flex items-center justify-center gap-2 shadow-2xs hover:shadow-xs transition-all active:scale-[0.99] disabled:opacity-60 cursor-pointer"
-            >
-              {isLoadingMore ? (
-                <>
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#8B5CF6]" />
-                  <span>Fetching Next Packet...</span>
-                </>
-              ) : (
-                <>
-                  <ChevronDown className="w-3.5 h-3.5 text-zinc-600" />
-                  <span>Load More Records (Packet of 8)</span>
-                </>
-              )}
-            </button>
-          </div>
+          <button
+            onClick={onLoadMore}
+            disabled={isLoadingMore}
+            className="snap-start shrink-0 w-36 sm:w-44 bg-zinc-50 hover:bg-zinc-100/80 rounded-3xl p-4 border border-dashed border-zinc-300 hover:border-zinc-400 flex flex-col items-center justify-center text-center gap-2 text-zinc-600 transition-all active:scale-[0.98] cursor-pointer"
+          >
+            <div className="w-10 h-10 rounded-2xl bg-white border border-zinc-200 flex items-center justify-center shadow-xs">
+              <Plus className={`w-5 h-5 text-zinc-700 ${isLoadingMore ? 'animate-spin' : ''}`} />
+            </div>
+            <span className="text-xs font-bold text-zinc-800 leading-tight">
+              {isLoadingMore ? 'Loading...' : 'Load More Records'}
+            </span>
+            <span className="text-[10px] font-mono text-zinc-400">+8 specimens</span>
+          </button>
         )}
       </div>
     </div>
