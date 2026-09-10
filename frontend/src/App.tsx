@@ -210,6 +210,20 @@ export function App() {
         setIsDrawerOpen(true);
         return;
       }
+
+      // If it is a stored database specimen, fetch its real saved report by specimen ID
+      if (item.id) {
+        const fullSpecimen = await FairPackAPI.getSpecimenById(item.id);
+        if (fullSpecimen && fullSpecimen.report) {
+          // Cache the report on the item so subsequent clicks are instantaneous
+          item.report = fullSpecimen.report;
+          setReport(fullSpecimen.report);
+          setIsDrawerOpen(true);
+          return;
+        }
+      }
+
+      // Fallback for preset demo items
       const newReport = await FairPackAPI.runAudit(item.presetId);
       setReport(newReport);
       setIsDrawerOpen(true);

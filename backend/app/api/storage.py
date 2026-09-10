@@ -198,3 +198,32 @@ def delete_specimen_from_db(specimen_id: str) -> bool:
         pass
 
     return deleted
+
+def get_specimen_by_id(specimen_id: str) -> Optional[Dict[str, Any]]:
+    """
+    Fetches the complete specimen record including its full audit report by ID.
+    """
+    if is_supabase_enabled():
+        try:
+            url = f"{SUPABASE_URL}/rest/v1/specimens?id=eq.{specimen_id}&limit=1"
+            req = urllib.request.Request(url, headers=_supabase_headers(use_service_key=True))
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                if isinstance(data, list) and len(data) > 0:
+                    return data[0]
+        except Exception as e:
+            print(f"Supabase fetch single specimen error: {e}")
+
+    # Fallback to local file
+    if os.path.exists(SPECIMENS_FILE):
+        try:
+            with open(SPECIMENS_FILE, "r", encoding="utf-8") as f:
+                content = f.read().strip()
+                if content:
+                    records = json.loads(content)
+                    for r in records:
+                        if r.get("id") == specimen_id or r.get("audit_id") == specimen_id:
+                            return r
+        except Exception:
+            pass
+    return None

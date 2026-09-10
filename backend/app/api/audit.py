@@ -10,6 +10,7 @@ from app.data.presets import DEMO_PRESETS
 from app.compliance.synthesizer import AuditSynthesizer
 from app.api.storage import (
     get_specimens_from_db,
+    get_specimen_by_id,
     insert_specimen_to_db,
     delete_specimen_from_db,
     upload_image_to_r2,
@@ -74,6 +75,16 @@ async def get_stored_specimens(
         "supabase_connected": is_supabase_enabled(),
         "specimens": records
     }
+
+@router.get("/specimens/{specimen_id}")
+async def get_single_stored_specimen(specimen_id: str):
+    """
+    Fetches a complete specimen record with its full audit report.
+    """
+    record = get_specimen_by_id(specimen_id)
+    if not record:
+        raise HTTPException(status_code=404, detail=f"Specimen '{specimen_id}' not found")
+    return record
 
 @router.delete("/specimens/{specimen_id}")
 async def delete_stored_specimen(specimen_id: str):

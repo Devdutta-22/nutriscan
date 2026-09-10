@@ -28,6 +28,18 @@ export class FairPackAPI {
     return { specimens: [], count: 0, has_more: false };
   }
 
+  static async getSpecimenById(specimenId: string): Promise<any | null> {
+    try {
+      const res = await fetch(`${API_BASE}/audit/specimens/${specimenId}`);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {
+      // Fallback
+    }
+    return null;
+  }
+
   static async deleteStoredSpecimen(specimenId: string): Promise<boolean> {
     try {
       const res = await fetch(`${API_BASE}/audit/specimens/${specimenId}`, {
